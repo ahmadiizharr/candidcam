@@ -73,3 +73,15 @@ def test_schedule_end_must_be_after_start(client):
         headers=CSRF,
     )
     assert r.status_code == 422
+
+
+def test_couple_names_are_optional_and_shown_to_guests_and_display(client):
+    register(client)
+    ev = create_event(client, couple_names="  Nadia & Rafi ")
+    assert ev["couple_names"] == "Nadia & Rafi"
+    pub = client.get("/api/g/budi-sinta").json()["event"]
+    assert pub["couple_names"] == "Nadia & Rafi"
+    assert pub["created_at"] == ev["created_at"]
+    assert client.get(f"/api/display/{ev['id']}/live").json()["event"]["couple_names"] == "Nadia & Rafi"
+    client.patch(f"/api/events/{ev['id']}", json={"couple_names": ""}, headers=CSRF)
+    assert client.get(f"/api/events/{ev['id']}").json()["couple_names"] is None

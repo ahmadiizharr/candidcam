@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { api } from '../lib/api.js'
 import { centerCrop, createRenderer, loadImage, renderThumbs, snapshot, stillRenderer } from '../lib/filters.js'
 import { canvasToBlob, composeFrame, ensureFont, loadFrameFonts } from '../lib/frame.js'
+import { formatDateTime } from '../lib/format.js'
 import { Icon } from '../ui/icons.jsx'
+import { Lightbox } from '../ui/Lightbox.jsx'
 import { toast } from '../ui/ui.jsx'
 
 const MAX_OUT = 2000
@@ -82,6 +84,8 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
   const [flashOn, setFlashOn] = useState(false)
   const [screenFlash, setScreenFlash] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [roll, setRoll] = useState(null)
+  const [rollIndex, setRollIndex] = useState(0)
   const touchX = useRef(null)
   const vp = useViewport()
 
@@ -254,6 +258,18 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
     }
   }
 
+  // Preview this guest's own roll without leaving the camera.
+  const openRoll = async () => {
+    try {
+      const r = await api(`/api/g/${event.slug}/photos?scope=mine`, { headers: { 'X-Guest-Token': token } })
+      if (!r.photos.length) return
+      setRollIndex(0)
+      setRoll(r.photos)
+    } catch (e) {
+      toast(e.message, 'error')
+    }
+  }
+
   const pick = (id) => {
     setFilter(id)
     document.getElementById(`cf-${id}`)?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
@@ -337,11 +353,11 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
         )}
 
         <div class="cam-bottom">
-          <RollDial left={remaining} total={event.max_photos_per_guest} />
+          <button class="roll-btn" onClick={openRoll} aria-label={t.yourRoll}><RollDial left={remaining} total={event.max_photos_per_guest} /></button>
           <button class="shutter" onClick={shoot} disabled={!ready || busy || remaining <= 0} aria-label={t.shutter}>
             <span />
           </button>
-          <button class={`last-shot ${last ? '' : 'empty'}`} onClick={onClose} aria-label={t.viewGallery}>
+          <button class={`last-shot ${last ? '' : 'empty'}`} onClick={openRoll} aria-label={t.yourRoll}>
             {last && <img key={last.key} src={last.src} alt="" />}
             {pending > 0 && <span class="last-pending">{pending}</span>}
           </button>
@@ -349,6 +365,22 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
       </div>
 
       {screenFlash && <div class="screen-flash" />}
+
+      {roll && (
+        <Lightbox
+          photos={roll}
+          index={rollIndex}
+          onIndex={setRollIndex}
+          onClose={() => setRoll(null)}
+          labels={{ close: t.close, prev: t.prev, next: t.next }}
+          footer={(p) => (
+            <>
+              <div class="lb-info"><strong>{t.yourRoll}</strong><span>{formatDateTime(p.created_at, event.language)}</span></div>
+              <a class="lb-action icon" href={`/api/g/${event.slug}/photos/${p.id}/download`} aria-label={t.download}><Icon name="download" size={18} /></a>
+            </>
+          )}
+        />
+      )}
 
       {finished && (
         <div class="cam-done">

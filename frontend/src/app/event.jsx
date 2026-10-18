@@ -261,6 +261,7 @@ const SECTIONS = [
 function toDraft(ev) {
   return {
     ...ev,
+    couple_names: ev.couple_names || '',
     frame_caption: ev.frame_caption || '',
     frame_date: ev.frame_date || '',
     frame_hashtag: ev.frame_hashtag || '',
@@ -271,7 +272,7 @@ function toDraft(ev) {
   }
 }
 
-const EDITABLE = ['name', 'slug', 'language', 'theme', 'aspect_ratio', 'filters', 'frame_style', 'frame_paper', 'frame_caption', 'frame_date', 'frame_hashtag', 'frame_font', 'frame_text_color', 'frame_date_format', 'participant_limit', 'max_photos_per_guest', 'allow_gallery_upload', 'guest_can_see_others', 'enable_likes', 'starts_at', 'ends_at']
+const EDITABLE = ['name', 'couple_names', 'slug', 'language', 'theme', 'aspect_ratio', 'filters', 'frame_style', 'frame_paper', 'frame_caption', 'frame_date', 'frame_hashtag', 'frame_font', 'frame_text_color', 'frame_date_format', 'participant_limit', 'max_photos_per_guest', 'allow_gallery_upload', 'guest_can_see_others', 'enable_likes', 'starts_at', 'ends_at']
 
 function Settings({ ev, setEv, catalog }) {
   const [draft, setDraft] = useState(() => toDraft(ev))

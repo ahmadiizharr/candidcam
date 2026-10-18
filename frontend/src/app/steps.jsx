@@ -40,6 +40,7 @@ const SLUG_MSG = {
 export function newDraft(catalog) {
   return {
     name: '',
+    couple_names: '',
     slug: '',
     slugTouched: false,
     language: 'id',
@@ -69,7 +70,7 @@ export function newDraft(catalog) {
 /** The API body for a draft (drops UI-only fields). */
 export function draftBody(d) {
   const { slugTouched, coverFile, coverPreview, coverRemoved, slugState, ...rest } = d
-  for (const k of ['frame_caption', 'frame_date', 'frame_hashtag']) rest[k] = rest[k] || null
+  for (const k of ['couple_names', 'frame_caption', 'frame_date', 'frame_hashtag']) rest[k] = rest[k]?.trim() || null
   return rest
 }
 
@@ -122,6 +123,11 @@ export function StepName({ draft, set, eventId, host }) {
           <input id="ev-name" class="input" placeholder="cth. Pernikahan Emma & Noah" value={draft.name} onInput={onName} maxLength={40} autoFocus={!eventId} style="padding-right:64px" />
           <span class="count">{draft.name.length}/40</span>
         </div>
+      </div>
+      <div class="field">
+        <label for="ev-couple">Nama Mempelai <span class="muted">(opsional)</span></label>
+        <input id="ev-couple" class="input" placeholder="cth. Nadia & Rafi" value={draft.couple_names} maxLength={60} onInput={(e) => set({ couple_names: e.currentTarget.value })} />
+        <p class="hint">Ditampilkan besar di Live Display, dengan tanggal acara di bawahnya. Kosongkan untuk memakai nama acara.</p>
       </div>
       <div class="field">
         <label for="ev-slug">Link Tamu</label>

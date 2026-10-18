@@ -152,6 +152,7 @@ function Summary({ draft, catalog, host, go }) {
   return (
     <div class="summary card">
       <Row label="Nama acara" value={<strong>{draft.name}</strong>} onEdit={() => go(0)} />
+      {draft.couple_names?.trim() && <Row label="Nama mempelai" value={draft.couple_names} onEdit={() => go(0)} />}
       <Row label="Link tamu" value={<span class="mono">{host}/{draft.slug}</span>} onEdit={() => go(0)} />
       <Row label="Tampilan" value={`${theme} · ${draft.language === 'en' ? 'English' : 'Bahasa Indonesia'}`} onEdit={() => go(0)} />
       <Row label="Foto sampul" value={draft.coverPreview ? <img class="sum-thumb" src={draft.coverPreview} alt="" /> : <span class="muted">Belum ada</span>} onEdit={() => go(1)} />

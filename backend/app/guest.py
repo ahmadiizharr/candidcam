@@ -63,7 +63,8 @@ def create_router() -> APIRouter:
         url = f"{request.app.state.settings.public_base_url}/{event['slug']}"
         colors = [c if len(c) == 6 and all(x in "0123456789abcdefABCDEF" for x in c) else d for c, d in ((dark, "000000"), (light, "ffffff"))]
         buf = io.BytesIO()
-        segno.make(url, error="m").save(buf, kind="svg", scale=8, border=2, dark=f"#{colors[0]}", light=f"#{colors[1]}", xmldecl=False, svgns=True)
+        # Level Q so the logo the live display lays over the centre never breaks scanning.
+        segno.make(url, error="q").save(buf, kind="svg", scale=8, border=2, dark=f"#{colors[0]}", light=f"#{colors[1]}", xmldecl=False, svgns=True)
         return Response(buf.getvalue(), media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=3600"})
 
     @r.get("/qr.png")

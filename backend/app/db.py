@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS events (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    couple_names TEXT,
     slug TEXT NOT NULL UNIQUE,
     cover TEXT,
     language TEXT NOT NULL,
@@ -103,7 +104,14 @@ class DB:
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.lock = threading.RLock()
+
+    def _migrate(self):
+        """Columns added after the first release; CREATE TABLE IF NOT EXISTS skips old tables."""
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(events)")}
+        if "couple_names" not in cols:
+            self.conn.execute("ALTER TABLE events ADD COLUMN couple_names TEXT")
 
     @contextmanager
     def tx(self):

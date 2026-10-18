@@ -24,6 +24,7 @@ DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 class EventIn(BaseModel):
     name: str | None = Field(default=None, max_length=40)
+    couple_names: str | None = Field(default=None, max_length=60)
     slug: str | None = Field(default=None, max_length=40)
     language: str | None = None
     theme: str | None = None
@@ -48,6 +49,7 @@ class EventIn(BaseModel):
 
 def defaults(catalog: dict) -> dict:
     return {
+        "couple_names": None,
         "language": "id",
         "theme": "dark_elegant",
         "aspect_ratio": "3:4",
@@ -206,6 +208,7 @@ def guest_view(row, base_url: str, guests_count: int) -> dict:
         "status": status(row),
         "guests_count": guests_count,
         "quota_full": d["participant_limit"] is not None and guests_count >= d["participant_limit"],
+        "created_at": row["created_at"],
         **{k: d[k] for k in d if k != "slug"},
     }
 

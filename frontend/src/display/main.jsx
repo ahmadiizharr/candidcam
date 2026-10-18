@@ -12,6 +12,7 @@ const eventId = location.pathname.split('/')[2]
 const TOKEN = `candid:display:${eventId}`
 const PREFS = 'candid:display:prefs'
 const POLL_MS = 5000
+const FILM_EDGE = 'CANDID 400 ◂ 12 ◂ 12A ◂ 13 ◂ 13A ◂ 14 ◂ 14A ◂ 15 ◂ 15A ◂ 16 ◂ 16A ◂ 17 ◂ 17A ◂ 18 ◂ 18A ◂ 19 ◂ 19A ◂ 20'
 
 const store = {
   get(k, fallback) {
@@ -29,6 +30,18 @@ const store = {
       /* ignore */
     }
   },
+}
+
+/** The day of the event: its schedule, else the frame date, else the day it was created. */
+function eventDate(ev) {
+  let d = null
+  if (ev.starts_at) d = new Date(ev.starts_at)
+  else if (ev.frame_date) {
+    const [y, m, day] = ev.frame_date.split('-').map(Number)
+    d = new Date(y, m - 1, day)
+  } else if (ev.created_at) d = new Date(ev.created_at)
+  if (!d || Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString(ev.language === 'en' ? 'en-GB' : 'id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function Unlock({ onUnlocked, lang }) {
@@ -242,22 +255,38 @@ function Wall() {
     <div class={`dsp ${scrap ? 'dsp-scrap' : 'dsp-dark'} ${idle ? 'idle' : ''}`}>
       <aside class="dsp-side">
         <div class="side-cover">
-          {ev.cover_url ? <img src={ev.cover_url} alt="" /> : <Icon name="camera" size={40} stroke={1.2} />}
-          <span class="side-live"><i /> LIVE</span>
+          {ev.cover_url ? <img src={ev.cover_url} alt="" /> : <span class="side-cover-empty"><Icon name="camera" size={44} stroke={1.2} /></span>}
+          {scrap ? (
+            <>
+              <span class="side-tape l" />
+              <span class="side-tape r" />
+            </>
+          ) : (
+            <>
+              <span class="side-vignette" />
+              <span class="side-sprockets l"><span>{FILM_EDGE}</span></span>
+              <span class="side-sprockets r"><span>{FILM_EDGE}</span></span>
+              <span class="side-fade" />
+            </>
+          )}
+          <span class="side-pill"><i /> LIVE · Candid Cam</span>
         </div>
         <div class="side-body">
-          <h1 class="side-name">{ev.name}</h1>
+          <h1 class="side-name">{ev.couple_names || ev.name}</h1>
+          {eventDate(ev) && <p class="side-date">{eventDate(ev)}</p>}
           <p class="side-stats">
-            <span><Icon name="users" size={16} /> {data.guests_count}/{ev.participant_limit ?? '∞'} {t.participantsShort}</span>
-            <span><Icon name="image" size={16} /> {t.photosCount(data.photos_count)}</span>
+            <span><Icon name="users" size={14} /> {data.guests_count}/{ev.participant_limit ?? '∞'} {t.participantsShort}</span>
+            <span class="dot" />
+            <span><Icon name="camera" size={14} /> {t.photosCount(data.photos_count)}</span>
           </p>
           <div class="side-qr">
             <img src={`/api/g/${ev.slug}/qr.svg`} alt="QR" />
+            <span class="qr-logo" aria-hidden="true"><Icon name="camera" size={18} stroke={2} /><i /></span>
           </div>
           <p class="side-scan">{t.scanToJoin}</p>
           <p class="side-url">{ev.public_url.replace(/^https?:\/\//, '')}</p>
         </div>
-        <p class="side-brand"><span class="wm-dot" /> Candid Cam</p>
+        <p class="side-brand"><span class="wm-dot" /> Candid<em>Cam</em></p>
       </aside>
 
       <main class="dsp-main">
