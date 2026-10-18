@@ -1,0 +1,29 @@
+# candid-cam-app — FastAPI backend + built frontend, di belakang nginx (cam.mangaisekai.com)
+# Pasang: \cp -f deploy/candid-cam.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now candid-cam
+[Unit]
+Description=Candid Cam (FastAPI) - cam.mangaisekai.com
+After=network.target
+
+[Service]
+# Foto dari tamu publik diproses di sini, jadi jalan sebagai user sementara tanpa hak root.
+DynamicUser=yes
+StateDirectory=candid-cam
+Environment=CANDID_DATA_DIR=/var/lib/candid-cam
+Environment=CANDID_DIST_DIR=/srv/candid-cam-app/frontend/dist
+Environment=CANDID_PUBLIC_URL=https://cam.mangaisekai.com
+WorkingDirectory=/srv/candid-cam-app/backend
+ExecStart=/srv/candid-cam-app/backend/.venv/bin/python -m uvicorn --factory app.main:create_app --host 127.0.0.1 --port 8092 --proxy-headers --forwarded-allow-ips 127.0.0.1 --no-server-header
+Restart=always
+RestartSec=3
+MemoryMax=500M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target
