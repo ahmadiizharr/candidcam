@@ -376,7 +376,7 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
           footer={(p) => (
             <>
               <div class="lb-info"><strong>{t.yourRoll}</strong><span>{formatDateTime(p.created_at, event.language)}</span></div>
-              <a class="lb-action icon" href={`/api/g/${event.slug}/photos/${p.id}/download`} aria-label={t.download}><Icon name="download" size={18} /></a>
+              <a class="lb-action primary" href={`/api/g/${event.slug}/photos/${p.id}/download`} download><Icon name="download" size={18} /> {t.download}</a>
             </>
           )}
         />

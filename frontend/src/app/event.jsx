@@ -210,8 +210,8 @@ function Photos({ ev, reload }) {
                 <strong>{p.guest_name}</strong>
                 <span>{timeAgo(p.created_at)} · {p.source === 'gallery' ? 'dari galeri' : 'kamera'}{ev.enable_likes ? ` · ${p.likes_count} like` : ''}</span>
               </div>
-              <a class="lb-action" href={`/api/g/${ev.slug}/photos/${p.id}/download`}><Icon name="download" size={18} /> Unduh</a>
-              <button class="lb-action danger" onClick={() => remove(p)}><Icon name="trash" size={18} /> Hapus</button>
+              <button class="lb-action icon danger" onClick={() => remove(p)} aria-label="Hapus"><Icon name="trash" size={18} /></button>
+              <a class="lb-action primary" href={`/api/g/${ev.slug}/photos/${p.id}/download`} download><Icon name="download" size={18} /> Unduh</a>
             </>
           )}
         />

@@ -368,14 +368,14 @@ function Home({ event, catalog, t, guest, token, onJoined, onLeave, setGuest, op
                   <Icon name="heart" size={18} fill={p.liked ? 'currentColor' : 'none'} /> {p.likes_count}
                 </button>
               )}
-              <a class="lb-action icon" href={`/api/g/${slug}/photos/${p.id}/download`} aria-label={t.download}><Icon name="download" size={18} /></a>
               <button class="lb-action icon" onClick={() => sharePhoto(p, event, t)} aria-label={t.share}><Icon name="share" size={18} /></button>
+              <a class="lb-action primary" href={`/api/g/${slug}/photos/${p.id}/download`} download><Icon name="download" size={18} /> {t.download}</a>
             </>
           )}
         />
       )}
 
-      {cropping && <Cropper image={cropping} ratio={ratio} t={t} busy={uploading} onCancel={() => setCropping(null)} onDone={finishCrop} />}
+      {cropping && <Cropper image={cropping} ratio={ratio} t={t} themeClass={`theme-${event.theme}`} busy={uploading} onCancel={() => setCropping(null)} onDone={finishCrop} />}
     </div>
   )
 }

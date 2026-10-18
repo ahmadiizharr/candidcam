@@ -335,10 +335,13 @@ function Wall() {
           onClose={() => setOpen(-1)}
           labels={{ close: t.close, prev: t.prev, next: t.next }}
           footer={(p) => (
-            <div class="lb-info">
-              <strong>{p.guest_name}</strong>
-              {showLikes && <span>{t.likes(p.likes_count)}</span>}
-            </div>
+            <>
+              <div class="lb-info">
+                <strong>{p.guest_name}</strong>
+                {showLikes && <span>{t.likes(p.likes_count)}</span>}
+              </div>
+              <a class="lb-action primary" href={`/api/g/${ev.slug}/photos/${p.id}/download`} download><Icon name="download" size={18} /> {t.download}</a>
+            </>
           )}
         />
       )}

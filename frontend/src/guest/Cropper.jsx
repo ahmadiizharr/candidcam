@@ -1,10 +1,11 @@
+import { createPortal } from 'preact/compat'
 import { useEffect, useRef, useState } from 'preact/hooks'
 
 /**
  * Fixed-ratio crop box over an image. Drag the box to move it, drag the corner to resize.
  * Calls onDone({x, y, w, h}) in 0–1 image units.
  */
-export function Cropper({ image, ratio, t, onCancel, onDone, busy }) {
+export function Cropper({ image, ratio, t, onCancel, onDone, busy, themeClass = 'theme-dark_elegant' }) {
   const wrap = useRef(null)
   const [box, setBox] = useState(null)
   const [view, setView] = useState(null)
@@ -63,8 +64,9 @@ export function Cropper({ image, ratio, t, onCancel, onDone, busy }) {
   }
   const onUp = () => (drag.current = null)
 
-  return (
-    <div class="crop-back" role="dialog" aria-modal="true">
+  // Into <body>, so the guest theme wrapper can't trap this fixed overlay.
+  return createPortal(
+    <div class={`crop-back gtheme ${themeClass}`} role="dialog" aria-modal="true">
       <div class="crop">
         <h3>{t.adjustTitle}</h3>
         <p>{t.adjustBody}</p>
@@ -87,6 +89,7 @@ export function Cropper({ image, ratio, t, onCancel, onDone, busy }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
