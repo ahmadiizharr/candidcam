@@ -47,6 +47,21 @@ CREATE TABLE IF NOT EXISTS events (
     starts_at TEXT,
     ends_at TEXT,
     display_passcode TEXT NOT NULL,
+    accent_color TEXT,
+    display_layout TEXT NOT NULL DEFAULT 'mosaic',
+    display_palette TEXT NOT NULL DEFAULT 'midnight',
+    wm_enabled INTEGER NOT NULL DEFAULT 0,
+    wm_mode TEXT NOT NULL DEFAULT 'text',
+    wm_text TEXT,
+    wm_show_date INTEGER NOT NULL DEFAULT 1,
+    wm_font TEXT NOT NULL DEFAULT 'playfair',
+    wm_color TEXT NOT NULL DEFAULT '#ffffff',
+    wm_opacity INTEGER NOT NULL DEFAULT 85,
+    wm_size TEXT NOT NULL DEFAULT 'md',
+    wm_pos_portrait TEXT NOT NULL DEFAULT 'bottom-right',
+    wm_pos_landscape TEXT NOT NULL DEFAULT 'bottom-right',
+    wm_image TEXT,
+    allow_clean_download INTEGER NOT NULL DEFAULT 1,
     first_photo_at TEXT,
     photos_deleted_at TEXT,
     created_at TEXT NOT NULL,
@@ -70,6 +85,7 @@ CREATE TABLE IF NOT EXISTS photos (
     width INTEGER NOT NULL,
     height INTEGER NOT NULL,
     likes_count INTEGER NOT NULL DEFAULT 0,
+    inner TEXT,
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS photos_event ON photos(event_id, created_at);
@@ -80,6 +96,28 @@ CREATE TABLE IF NOT EXISTS likes (
     PRIMARY KEY (photo_id, guest_id)
 );
 """
+
+
+# (table, column, declaration) for every column added after the first release.
+ADDED_COLUMNS = [
+    ("events", "couple_names", "TEXT"),
+    ("events", "accent_color", "TEXT"),
+    ("events", "display_layout", "TEXT NOT NULL DEFAULT 'mosaic'"),
+    ("events", "display_palette", "TEXT NOT NULL DEFAULT 'midnight'"),
+    ("events", "wm_enabled", "INTEGER NOT NULL DEFAULT 0"),
+    ("events", "wm_mode", "TEXT NOT NULL DEFAULT 'text'"),
+    ("events", "wm_text", "TEXT"),
+    ("events", "wm_show_date", "INTEGER NOT NULL DEFAULT 1"),
+    ("events", "wm_font", "TEXT NOT NULL DEFAULT 'playfair'"),
+    ("events", "wm_color", "TEXT NOT NULL DEFAULT '#ffffff'"),
+    ("events", "wm_opacity", "INTEGER NOT NULL DEFAULT 85"),
+    ("events", "wm_size", "TEXT NOT NULL DEFAULT 'md'"),
+    ("events", "wm_pos_portrait", "TEXT NOT NULL DEFAULT 'bottom-right'"),
+    ("events", "wm_pos_landscape", "TEXT NOT NULL DEFAULT 'bottom-right'"),
+    ("events", "wm_image", "TEXT"),
+    ("events", "allow_clean_download", "INTEGER NOT NULL DEFAULT 1"),
+    ("photos", "inner", "TEXT"),
+]
 
 
 def now() -> datetime:
@@ -109,9 +147,10 @@ class DB:
 
     def _migrate(self):
         """Columns added after the first release; CREATE TABLE IF NOT EXISTS skips old tables."""
-        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(events)")}
-        if "couple_names" not in cols:
-            self.conn.execute("ALTER TABLE events ADD COLUMN couple_names TEXT")
+        for table, column, decl in ADDED_COLUMNS:
+            cols = {r[1] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            if column not in cols:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
 
     @contextmanager
     def tx(self):

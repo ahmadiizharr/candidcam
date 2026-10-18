@@ -1,60 +1,547 @@
 {
   "_comment": "Sumber tunggal pilihan acara. Backend memvalidasi terhadap file ini, frontend membacanya lewat /api/catalog.",
   "languages": [
-    { "id": "id", "name": "Bahasa Indonesia" },
-    { "id": "en", "name": "English" }
+    {
+      "id": "id",
+      "name": "Bahasa Indonesia"
+    },
+    {
+      "id": "en",
+      "name": "English"
+    }
   ],
   "themes": [
-    { "id": "dark_elegant", "name": "Dark Elegant", "color": "#0b0a0d" },
-    { "id": "scrapbook", "name": "Scrapbook", "color": "#f3e9d6" }
+    {
+      "id": "dark_elegant",
+      "name": "Dark Elegant",
+      "color": "#0b0a0d",
+      "accent": "#e0a94a",
+      "dark": true,
+      "blurb": {
+        "id": "Strip film di malam hari",
+        "en": "Film strip after dark"
+      }
+    },
+    {
+      "id": "scrapbook",
+      "name": "Scrapbook",
+      "color": "#f3e9d6",
+      "accent": "#bf5b3a",
+      "dark": false,
+      "blurb": {
+        "id": "Polaroid berselotip, tulisan tangan",
+        "en": "Taped polaroid, handwriting"
+      }
+    },
+    {
+      "id": "ivory",
+      "name": "Ivory Arch",
+      "color": "#f6f1e8",
+      "accent": "#a8834f",
+      "dark": false,
+      "blurb": {
+        "id": "Jendela lengkung, serif klasik",
+        "en": "Arched window, classic serif"
+      }
+    },
+    {
+      "id": "contact_sheet",
+      "name": "Contact Sheet",
+      "color": "#1b1b1a",
+      "accent": "#e2412f",
+      "dark": true,
+      "blurb": {
+        "id": "Lembar kontak kamar gelap",
+        "en": "Darkroom contact sheet"
+      }
+    },
+    {
+      "id": "riso",
+      "name": "Riso Zine",
+      "color": "#f4efe4",
+      "accent": "#ff4f8b",
+      "dark": false,
+      "blurb": {
+        "id": "Cetak risograf dua tinta",
+        "en": "Two-ink risograph print"
+      }
+    },
+    {
+      "id": "ticket",
+      "name": "Ticket Stub",
+      "color": "#16213d",
+      "accent": "#f2c14e",
+      "dark": true,
+      "blurb": {
+        "id": "Karcis masuk berlubang",
+        "en": "Perforated admission ticket"
+      }
+    },
+    {
+      "id": "neon",
+      "name": "Neon Night",
+      "color": "#0c0718",
+      "accent": "#3df5ff",
+      "dark": true,
+      "blurb": {
+        "id": "Lampu neon pesta",
+        "en": "Party neon glow"
+      }
+    },
+    {
+      "id": "garden",
+      "name": "Garden Party",
+      "color": "#e7ecdf",
+      "accent": "#56744a",
+      "dark": false,
+      "blurb": {
+        "id": "Bingkai oval & ranting daun",
+        "en": "Oval frame & leafy sprigs"
+      }
+    }
   ],
   "aspect_ratios": [
-    { "id": "3:4", "w": 3, "h": 4, "name": { "id": "Potret klasik", "en": "Classic portrait" } },
-    { "id": "9:16", "w": 9, "h": 16, "name": { "id": "Story / Reel", "en": "Story / Reel" } }
+    {
+      "id": "3:4",
+      "w": 3,
+      "h": 4,
+      "name": {
+        "id": "Potret klasik",
+        "en": "Classic portrait"
+      }
+    },
+    {
+      "id": "9:16",
+      "w": 9,
+      "h": 16,
+      "name": {
+        "id": "Story / Reel",
+        "en": "Story / Reel"
+      }
+    }
   ],
   "filters": [
-    { "id": "none", "name": "Original" },
-    { "id": "amber_vintage", "name": "Amber Vintage" },
-    { "id": "cinema_deep", "name": "Cinema Deep" },
-    { "id": "warm_classic", "name": "Warm Classic" },
-    { "id": "retro_toy", "name": "Retro Toy" },
-    { "id": "soft_skin", "name": "Soft Skin" },
-    { "id": "directors_cut", "name": "Director's Cut" },
-    { "id": "teal_orange", "name": "Teal & Orange" },
-    { "id": "cool_steel", "name": "Cool Steel" },
-    { "id": "moody_teal", "name": "Moody Teal" },
-    { "id": "matte_fade", "name": "Matte Fade" },
-    { "id": "golden_hour", "name": "Golden Hour" },
-    { "id": "bright_airy", "name": "Bright Airy" },
-    { "id": "soft_glow", "name": "Soft Glow" },
-    { "id": "faded_film", "name": "Faded Film" }
+    {
+      "id": "none",
+      "name": "Original"
+    },
+    {
+      "id": "amber_vintage",
+      "name": "Amber Vintage"
+    },
+    {
+      "id": "cinema_deep",
+      "name": "Cinema Deep"
+    },
+    {
+      "id": "warm_classic",
+      "name": "Warm Classic"
+    },
+    {
+      "id": "retro_toy",
+      "name": "Retro Toy"
+    },
+    {
+      "id": "soft_skin",
+      "name": "Soft Skin"
+    },
+    {
+      "id": "directors_cut",
+      "name": "Director's Cut"
+    },
+    {
+      "id": "teal_orange",
+      "name": "Teal & Orange"
+    },
+    {
+      "id": "cool_steel",
+      "name": "Cool Steel"
+    },
+    {
+      "id": "moody_teal",
+      "name": "Moody Teal"
+    },
+    {
+      "id": "matte_fade",
+      "name": "Matte Fade"
+    },
+    {
+      "id": "golden_hour",
+      "name": "Golden Hour"
+    },
+    {
+      "id": "bright_airy",
+      "name": "Bright Airy"
+    },
+    {
+      "id": "soft_glow",
+      "name": "Soft Glow"
+    },
+    {
+      "id": "faded_film",
+      "name": "Faded Film"
+    },
+    {
+      "id": "mono_classic",
+      "name": "Mono Classic"
+    },
+    {
+      "id": "sunlit_200",
+      "name": "Sunlit 200"
+    },
+    {
+      "id": "pastel_portrait",
+      "name": "Pastel Portrait"
+    },
+    {
+      "id": "green_400",
+      "name": "Green 400"
+    },
+    {
+      "id": "instant_600",
+      "name": "Instant 600"
+    },
+    {
+      "id": "night_neon",
+      "name": "Night Neon"
+    }
   ],
   "frame_styles": [
-    { "id": "none", "name": { "id": "Tanpa Bingkai", "en": "No Frame" } },
-    { "id": "polaroid", "name": { "id": "Polaroid", "en": "Polaroid" } }
+    {
+      "id": "none",
+      "name": {
+        "id": "Tanpa Bingkai",
+        "en": "No Frame"
+      }
+    },
+    {
+      "id": "polaroid",
+      "name": {
+        "id": "Polaroid",
+        "en": "Polaroid"
+      }
+    }
   ],
   "frame_papers": [
-    { "id": "white", "name": { "id": "Putih Polos", "en": "Plain White" }, "paper": "#fbfaf7", "ink": "#1d1d1d" },
-    { "id": "cream", "name": { "id": "Krem", "en": "Cream" }, "paper": "#f3ead8", "ink": "#3b2f22" },
-    { "id": "kraft", "name": { "id": "Kraft", "en": "Kraft" }, "paper": "#c8a77d", "ink": "#2e2116" },
-    { "id": "blush", "name": { "id": "Blush", "en": "Blush" }, "paper": "#f2dcd8", "ink": "#5a2f33" },
-    { "id": "sage", "name": { "id": "Sage", "en": "Sage" }, "paper": "#dde3d3", "ink": "#2c3a2a" },
-    { "id": "noir", "name": { "id": "Hitam", "en": "Noir" }, "paper": "#17161a", "ink": "#f4efe6" }
+    {
+      "id": "white",
+      "name": {
+        "id": "Putih Polos",
+        "en": "Plain White"
+      },
+      "paper": "#fbfaf7",
+      "ink": "#1d1d1d"
+    },
+    {
+      "id": "cream",
+      "name": {
+        "id": "Krem",
+        "en": "Cream"
+      },
+      "paper": "#f3ead8",
+      "ink": "#3b2f22"
+    },
+    {
+      "id": "kraft",
+      "name": {
+        "id": "Kraft",
+        "en": "Kraft"
+      },
+      "paper": "#c8a77d",
+      "ink": "#2e2116"
+    },
+    {
+      "id": "blush",
+      "name": {
+        "id": "Blush",
+        "en": "Blush"
+      },
+      "paper": "#f2dcd8",
+      "ink": "#5a2f33"
+    },
+    {
+      "id": "sage",
+      "name": {
+        "id": "Sage",
+        "en": "Sage"
+      },
+      "paper": "#dde3d3",
+      "ink": "#2c3a2a"
+    },
+    {
+      "id": "noir",
+      "name": {
+        "id": "Hitam",
+        "en": "Noir"
+      },
+      "paper": "#17161a",
+      "ink": "#f4efe6"
+    }
   ],
   "frame_fonts": [
-    { "id": "playfair", "family": "Playfair Display", "style": "italic", "weight": 500, "name": { "id": "Editorial", "en": "Editorial" } },
-    { "id": "script", "family": "Dancing Script", "style": "normal", "weight": 600, "name": { "id": "Script", "en": "Script" } },
-    { "id": "montserrat", "family": "Montserrat", "style": "normal", "weight": 600, "name": { "id": "Modern", "en": "Modern" } },
-    { "id": "garamond", "family": "Cormorant Garamond", "style": "italic", "weight": 500, "name": { "id": "Klasik", "en": "Classic" } },
-    { "id": "bebas", "family": "Bebas Neue", "style": "normal", "weight": 400, "name": { "id": "Bold", "en": "Bold" } },
-    { "id": "typewriter", "family": "Special Elite", "style": "normal", "weight": 400, "name": { "id": "Vintage", "en": "Vintage" } }
+    {
+      "id": "playfair",
+      "family": "Playfair Display",
+      "style": "italic",
+      "weight": 500,
+      "name": {
+        "id": "Editorial",
+        "en": "Editorial"
+      },
+      "file": "PlayfairDisplay-Italic.ttf",
+      "wght": 500
+    },
+    {
+      "id": "script",
+      "family": "Dancing Script",
+      "style": "normal",
+      "weight": 600,
+      "name": {
+        "id": "Script",
+        "en": "Script"
+      },
+      "file": "DancingScript.ttf",
+      "wght": 600
+    },
+    {
+      "id": "montserrat",
+      "family": "Montserrat",
+      "style": "normal",
+      "weight": 600,
+      "name": {
+        "id": "Modern",
+        "en": "Modern"
+      },
+      "file": "Montserrat.ttf",
+      "wght": 600
+    },
+    {
+      "id": "garamond",
+      "family": "Cormorant Garamond",
+      "style": "italic",
+      "weight": 500,
+      "name": {
+        "id": "Klasik",
+        "en": "Classic"
+      },
+      "file": "CormorantGaramond-Italic.ttf",
+      "wght": 500
+    },
+    {
+      "id": "bebas",
+      "family": "Bebas Neue",
+      "style": "normal",
+      "weight": 400,
+      "name": {
+        "id": "Bold",
+        "en": "Bold"
+      },
+      "file": "BebasNeue-Regular.ttf",
+      "wght": null
+    },
+    {
+      "id": "typewriter",
+      "family": "Special Elite",
+      "style": "normal",
+      "weight": 400,
+      "name": {
+        "id": "Vintage",
+        "en": "Vintage"
+      },
+      "file": "SpecialElite-Regular.ttf",
+      "wght": null
+    }
   ],
   "date_formats": [
-    { "id": "dd/mm/yyyy", "name": "DD-MM-YYYY" },
-    { "id": "mm/dd/yyyy", "name": "MM-DD-YYYY" }
+    {
+      "id": "dd/mm/yyyy",
+      "name": "DD-MM-YYYY"
+    },
+    {
+      "id": "mm/dd/yyyy",
+      "name": "MM-DD-YYYY"
+    }
   ],
-  "participant_limits": [5, 10, 25, 50, 100, 200, 300, 500, null],
-  "photos_per_guest": [3, 5, 10, 15, 20, 30],
+  "participant_limits": [
+    5,
+    10,
+    25,
+    50,
+    100,
+    200,
+    300,
+    500,
+    null
+  ],
+  "photos_per_guest": [
+    3,
+    5,
+    10,
+    15,
+    20,
+    30
+  ],
   "free_participants": 5,
-  "retention_months": 12
+  "retention_months": 12,
+  "accents": [
+    "#e0a94a",
+    "#bf5b3a",
+    "#a8834f",
+    "#e2412f",
+    "#ff4f8b",
+    "#f2c14e",
+    "#3df5ff",
+    "#56744a",
+    "#7b61ff",
+    "#2f6fed",
+    "#c2185b",
+    "#1f8a70"
+  ],
+  "watermark": {
+    "positions": [
+      "top-left",
+      "top-center",
+      "top-right",
+      "center",
+      "bottom-left",
+      "bottom-center",
+      "bottom-right"
+    ],
+    "sizes": [
+      {
+        "id": "sm",
+        "name": {
+          "id": "Kecil",
+          "en": "Small"
+        },
+        "text": 0.04,
+        "image": 0.18
+      },
+      {
+        "id": "md",
+        "name": {
+          "id": "Sedang",
+          "en": "Medium"
+        },
+        "text": 0.055,
+        "image": 0.26
+      },
+      {
+        "id": "lg",
+        "name": {
+          "id": "Besar",
+          "en": "Large"
+        },
+        "text": 0.075,
+        "image": 0.36
+      }
+    ],
+    "modes": [
+      {
+        "id": "text",
+        "name": {
+          "id": "Teks & tanggal",
+          "en": "Text & date"
+        }
+      },
+      {
+        "id": "image",
+        "name": {
+          "id": "Logo PNG",
+          "en": "PNG logo"
+        }
+      }
+    ]
+  },
+  "display_layouts": [
+    {
+      "id": "mosaic",
+      "name": {
+        "id": "Dinding Mosaik",
+        "en": "Mosaic Wall"
+      },
+      "blurb": {
+        "id": "Semua foto dalam kolom rapat, kartu karcis di pojok.",
+        "en": "Every photo in tight columns, ticket card in the corner."
+      }
+    },
+    {
+      "id": "table",
+      "name": {
+        "id": "Meja Polaroid",
+        "en": "Polaroid Table"
+      },
+      "blurb": {
+        "id": "Foto jatuh sebagai polaroid berserakan di atas meja.",
+        "en": "Photos drop as scattered polaroids on a table."
+      }
+    },
+    {
+      "id": "cinema",
+      "name": {
+        "id": "Layar Bioskop",
+        "en": "Cinema"
+      },
+      "blurb": {
+        "id": "Satu foto besar bergantian, pita film berjalan di bawah.",
+        "en": "One big rotating photo, a film strip running below."
+      }
+    }
+  ],
+  "display_palettes": [
+    {
+      "id": "midnight",
+      "name": "Midnight",
+      "bg": "#0c0b10",
+      "panel": "#17151d",
+      "ink": "#f4efe6",
+      "accent": "#e0a94a",
+      "dark": true
+    },
+    {
+      "id": "ivory",
+      "name": "Ivory",
+      "bg": "#f3eee4",
+      "panel": "#e9e1d2",
+      "ink": "#2a221a",
+      "accent": "#b0462f",
+      "dark": false
+    },
+    {
+      "id": "blush",
+      "name": "Blush",
+      "bg": "#f4e3df",
+      "panel": "#ecd0ca",
+      "ink": "#4a2328",
+      "accent": "#c2185b",
+      "dark": false
+    },
+    {
+      "id": "forest",
+      "name": "Forest",
+      "bg": "#0e1d16",
+      "panel": "#15291f",
+      "ink": "#eaf2e3",
+      "accent": "#c8e06b",
+      "dark": true
+    },
+    {
+      "id": "cobalt",
+      "name": "Cobalt",
+      "bg": "#0a1735",
+      "panel": "#102349",
+      "ink": "#eef3ff",
+      "accent": "#ffcf4a",
+      "dark": true
+    },
+    {
+      "id": "ember",
+      "name": "Ember",
+      "bg": "#1a0d08",
+      "panel": "#27150d",
+      "ink": "#ffeedd",
+      "accent": "#ff7a3d",
+      "dark": true
+    }
+  ]
 }

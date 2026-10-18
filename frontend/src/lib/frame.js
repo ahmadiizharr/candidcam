@@ -62,9 +62,11 @@ export function composeFrame(photo, ev, catalog) {
   if (!ev || ev.frame_style !== 'polaroid') return photo
   const W = photo.width
   const H = photo.height
+  // Sized from the short edge so landscape shots get the same paper as portrait ones.
+  const S = Math.min(W, H)
   const tall = H / W > 1.5
-  const side = Math.round(W * 0.055)
-  const bottom = Math.round(W * (tall ? 0.24 : 0.29))
+  const side = Math.round(S * 0.055)
+  const bottom = Math.round(S * (tall ? 0.24 : W > H ? 0.22 : 0.29))
   const out = document.createElement('canvas')
   out.width = W + side * 2
   out.height = H + side + bottom
@@ -78,6 +80,9 @@ export function composeFrame(photo, ev, catalog) {
   ctx.strokeStyle = 'rgba(0,0,0,0.14)'
   ctx.lineWidth = Math.max(1, W / 900)
   ctx.strokeRect(side + 0.5, side + 0.5, W - 1, H - 1)
+
+  // Where the photo sits, so the server can keep a watermark off the paper.
+  out.inner = { x: side / out.width, y: side / out.height, w: W / out.width, h: H / out.height }
 
   const f = fontFor(catalog, ev.frame_font)
   const caption = (ev.frame_caption || '').trim()

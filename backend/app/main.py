@@ -10,7 +10,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import auth, display, guest, host, pages
+from . import auth, display, guest, host, pages, watermark
+from .auth import current_user
 from .retention import purge_expired
 from .config import Settings
 from .db import DB
@@ -20,7 +21,10 @@ log = logging.getLogger("candid")
 mimetypes.add_type("image/webp", ".webp")
 
 MEDIA_ID = re.compile(r"^[0-9a-f]{32}$")
-MEDIA_NAME = re.compile(r"^(?:[A-Za-z0-9_-]{16}(?:\.jpg|_t\.webp)|cover-[0-9a-f]{8}\.webp)$")
+MEDIA_NAME = re.compile(
+    r"^(?:(?P<pid>[A-Za-z0-9_-]{16})(?:\.jpg|_t\.webp|\.w(?P<h1>[0-9a-f]{10})\.jpg|_t\.w(?P<h2>[0-9a-f]{10})\.webp)"
+    r"|cover-[0-9a-f]{8}\.webp|wm-[0-9a-f]{8}\.png)$"
+)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -53,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.catalog = json.loads(settings.catalog_file.read_text())
     app.include_router(auth.create_router(settings.session_days))
     app.include_router(host.create_router())
+    app.include_router(host.create_preview_router())
     app.include_router(guest.create_router())
     app.include_router(display.create_router())
 
@@ -61,12 +66,40 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return app.state.catalog
 
     @app.get("/media/{event_id}/{name}")
-    def media_file(event_id: str, name: str):
-        path = settings.media_dir / event_id / name
-        if not MEDIA_ID.match(event_id) or not MEDIA_NAME.match(name) or not path.is_file():
+    def media_file(event_id: str, name: str, request: Request):
+        m = MEDIA_NAME.match(name)
+        if not MEDIA_ID.match(event_id) or not m:
             raise HTTPException(404, "Tidak ditemukan")
-        # Names are random and never reused, so the bytes behind a URL never change.
-        return FileResponse(path, headers={"Cache-Control": "public, max-age=31536000, immutable"})
+        folder = settings.media_dir / event_id
+        forever = {"Cache-Control": "public, max-age=31536000, immutable"}
+        if not m.group("pid"):  # cover or watermark logo
+            path = folder / name
+            if not path.is_file():
+                raise HTTPException(404, "Tidak ditemukan")
+            return FileResponse(path, headers=forever)
+        db = app.state.db
+        event = db.one("SELECT * FROM events WHERE id = ?", event_id)
+        photo = db.one("SELECT * FROM photos WHERE id = ? AND event_id = ?", m.group("pid"), event_id)
+        if event is None or photo is None:
+            raise HTTPException(404, "Tidak ditemukan")
+        version = m.group("h1") or m.group("h2")
+        thumb = name.startswith(f"{photo['id']}_t")
+        if version:
+            # Only the current watermark version exists; older URLs simply stop resolving.
+            if version != watermark.wm_hash(event):
+                raise HTTPException(404, "Tidak ditemukan")
+            path = watermark.ensure(folder, photo, event, app.state.catalog, settings.fonts_dir, thumb=thumb)
+            return FileResponse(path, headers=forever)
+        path = folder / name
+        if not path.is_file():
+            raise HTTPException(404, "Tidak ditemukan")
+        if event["wm_enabled"]:
+            # While watermarking, the clean original is the host's alone and must stay out of CDN caches.
+            user = current_user(request)
+            if not user or user["id"] != event["user_id"]:
+                raise HTTPException(404, "Tidak ditemukan")
+            return FileResponse(path, headers={"Cache-Control": "private, no-store"})
+        return FileResponse(path, headers=forever)
 
     @app.exception_handler(StarletteHTTPException)
     async def not_found(request: Request, exc: StarletteHTTPException):

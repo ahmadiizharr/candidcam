@@ -20,6 +20,7 @@ RESERVED = {
 }
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+BOOLS = ("allow_gallery_upload", "guest_can_see_others", "enable_likes", "wm_enabled", "wm_show_date", "allow_clean_download")
 
 
 class EventIn(BaseModel):
@@ -45,6 +46,20 @@ class EventIn(BaseModel):
     enable_likes: bool | None = None
     starts_at: str | None = None
     ends_at: str | None = None
+    accent_color: str | None = None
+    display_layout: str | None = None
+    display_palette: str | None = None
+    wm_enabled: bool | None = None
+    wm_mode: str | None = None
+    wm_text: str | None = Field(default=None, max_length=60)
+    wm_show_date: bool | None = None
+    wm_font: str | None = None
+    wm_color: str | None = None
+    wm_opacity: int | None = None
+    wm_size: str | None = None
+    wm_pos_portrait: str | None = None
+    wm_pos_landscape: str | None = None
+    allow_clean_download: bool | None = None
 
 
 def defaults(catalog: dict) -> dict:
@@ -69,6 +84,20 @@ def defaults(catalog: dict) -> dict:
         "enable_likes": True,
         "starts_at": None,
         "ends_at": None,
+        "accent_color": None,
+        "display_layout": "mosaic",
+        "display_palette": "midnight",
+        "wm_enabled": False,
+        "wm_mode": "text",
+        "wm_text": None,
+        "wm_show_date": True,
+        "wm_font": "playfair",
+        "wm_color": "#ffffff",
+        "wm_opacity": 85,
+        "wm_size": "md",
+        "wm_pos_portrait": "bottom-right",
+        "wm_pos_landscape": "bottom-right",
+        "allow_clean_download": True,
     }
 
 
@@ -116,6 +145,23 @@ def clean(body: EventIn, catalog: dict, current: dict) -> dict:
     ):
         if out[key] not in ids(cat):
             _bad(f"Pilihan {key} tidak dikenal")
+    for key, cat in (("display_layout", "display_layouts"), ("display_palette", "display_palettes"), ("wm_font", "frame_fonts")):
+        if out[key] not in ids(cat):
+            _bad(f"Pilihan {key} tidak dikenal")
+    wm = catalog["watermark"]
+    if out["wm_mode"] not in {m["id"] for m in wm["modes"]} or out["wm_size"] not in {z["id"] for z in wm["sizes"]}:
+        _bad("Pengaturan watermark tidak dikenal")
+    if out["wm_pos_portrait"] not in wm["positions"] or out["wm_pos_landscape"] not in wm["positions"]:
+        _bad("Posisi watermark tidak dikenal")
+    if not isinstance(out["wm_opacity"], int) or not 10 <= out["wm_opacity"] <= 100:
+        _bad("Transparansi watermark harus 10–100")
+    for key in ("accent_color", "wm_color"):
+        if out[key] is not None:
+            if not HEX.match(out[key]):
+                _bad("Warna harus berformat #RRGGBB")
+            out[key] = out[key].lower()
+    if out["wm_color"] is None:
+        _bad("Warna watermark wajib diisi")
     filters = out["filters"] or []
     if not filters:
         _bad("Pilih minimal 1 filter")
@@ -147,7 +193,7 @@ def clean(body: EventIn, catalog: dict, current: dict) -> dict:
 def to_columns(data: dict) -> dict:
     cols = {k: v for k, v in data.items() if k in EventIn.model_fields}
     cols["filters"] = json.dumps(data["filters"])
-    for key in ("allow_gallery_upload", "guest_can_see_others", "enable_likes"):
+    for key in BOOLS:
         cols[key] = int(bool(data[key]))
     return cols
 
@@ -155,7 +201,7 @@ def to_columns(data: dict) -> dict:
 def from_row(row) -> dict:
     d = {k: row[k] for k in EventIn.model_fields}
     d["filters"] = json.loads(row["filters"])
-    for key in ("allow_gallery_upload", "guest_can_see_others", "enable_likes"):
+    for key in BOOLS:
         d[key] = bool(d[key])
     return d
 
@@ -188,6 +234,7 @@ def host_view(row, base_url: str, retention_days: int, stats: dict) -> dict:
         "display_url": f"{base_url}/display/{row['id']}",
         "cover_url": cover_url(row),
         "display_passcode": row["display_passcode"],
+        "wm_image_url": f"/media/{row['id']}/{row['wm_image']}" if row["wm_image"] else None,
         "status": status(row),
         "photos_expire_at": photos_expire_at(row, retention_days),
         "photos_deleted_at": row["photos_deleted_at"],

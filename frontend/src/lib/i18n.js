@@ -84,6 +84,9 @@ const id = {
   settings: 'Pengaturan tampilan',
   justIn: 'Baru masuk',
   spotlight: 'Sorot foto baru',
+  layout: 'Tata letak',
+  palette: 'Palet warna',
+  eventDefault: 'Ikuti pengaturan acara',
 }
 
 const en = {
@@ -167,6 +170,9 @@ const en = {
   settings: 'Display settings',
   justIn: 'Just in',
   spotlight: 'Spotlight new photos',
+  layout: 'Layout',
+  palette: 'Palette',
+  eventDefault: 'Use the event settings',
 }
 
 export function strings(lang) {

@@ -24,7 +24,7 @@ def purge_expired(db: DB, settings: Settings) -> int:
         folder = settings.media_dir / row["id"]
         if folder.is_dir():
             for f in folder.iterdir():
-                if f.name != row["cover"]:
+                if f.name != row["cover"] and not f.name.startswith("wm-"):
                     f.unlink(missing_ok=True)
         log.info("archived photos of event %s", row["id"])
     db.run("DELETE FROM auth_sessions WHERE expires_at < ?", iso(now()))

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { api } from '../lib/api.js'
-import { centerCrop, createRenderer, loadImage, renderThumbs, snapshot, stillRenderer } from '../lib/filters.js'
-import { canvasToBlob, composeFrame, ensureFont, loadFrameFonts } from '../lib/frame.js'
-import { formatDateTime } from '../lib/format.js'
+import { centerCrop, createRenderer, PRESETS, snapshot, stillRenderer } from '../lib/filters.js'
+import { canvasToBlob, composeFrame, ensureFont, formatFrameDate, loadFrameFonts } from '../lib/frame.js'
+import { formatDateTime, pad2 } from '../lib/format.js'
 import { Icon } from '../ui/icons.jsx'
 import { Lightbox } from '../ui/Lightbox.jsx'
 import { toast } from '../ui/ui.jsx'
@@ -10,15 +10,16 @@ import { toast } from '../ui/ui.jsx'
 const MAX_OUT = 2000
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-export async function uploadPhoto(slug, token, blob, { filter, source }) {
+export async function uploadPhoto(slug, token, blob, { filter, source, inner }) {
   const form = new FormData()
   form.append('photo', blob, 'photo.jpg')
   form.append('filter', filter)
   form.append('source', source)
+  if (inner) form.append('inner', [inner.x, inner.y, inner.w, inner.h].map((v) => v.toFixed(4)).join(','))
   return api(`/api/g/${slug}/photos`, { method: 'POST', form, headers: { 'X-Guest-Token': token } })
 }
 
-/** Centre crop for the event ratio, narrowed further by a digital zoom factor. */
+/** Centre crop for the shot ratio, narrowed further by a digital zoom factor. */
 function zoomedCrop(vw, vh, ratio, z) {
   const c = centerCrop(vw, vh, ratio)
   if (z <= 1) return c
@@ -32,47 +33,78 @@ function useViewport() {
     const on = () => setVp(read())
     addEventListener('resize', on)
     window.visualViewport?.addEventListener('resize', on)
+    screen.orientation?.addEventListener?.('change', on)
     return () => {
       removeEventListener('resize', on)
       window.visualViewport?.removeEventListener('resize', on)
+      screen.orientation?.removeEventListener?.('change', on)
     }
   }, [])
   return vp
 }
 
-/** Film-canister counter: one dot per shot on the roll, the number is what's left. */
-function RollDial({ left, total }) {
-  const n = Math.min(total, 36)
-  const dots = Array.from({ length: n }, (_, i) => {
-    const a = (i / n) * Math.PI * 2 - Math.PI / 2
-    return { x: 30 + Math.cos(a) * 24, y: 30 + Math.sin(a) * 24, on: i < Math.round((left / total) * n) }
-  })
+/** A film box for each look: its colours come from the filter's own split-tone. */
+function stockStyle(id) {
+  const p = PRESETS[id] || {}
+  const c = (v, k = 1) => `rgb(${(v || [0.5, 0.5, 0.5]).map((x) => Math.round(Math.min(1, x * k) * 255)).join(',')})`
+  if (id === 'none') return { background: 'linear-gradient(160deg, #f4f1ea, #b9b4aa)' }
+  if (p.saturation === 0) return { background: 'linear-gradient(160deg, #f2f2f2, #2a2a2a)' }
+  return { background: `linear-gradient(160deg, ${c(p.high, 1)} 0%, ${c(p.high, 0.82)} 38%, ${c(p.shadow, 0.9)} 100%)` }
+}
+const isoOf = (i) => [100, 200, 400, 800, 160, 320, 640][i % 7]
+
+/** Odometer-style counter: digits roll when the number changes. */
+function Counter({ value }) {
+  const digits = pad2(Math.max(0, value)).split('')
   return (
-    <span class="roll-dial" aria-hidden="true">
-      <svg viewBox="0 0 60 60">
-        {dots.map((d, i) => <circle key={i} cx={d.x} cy={d.y} r={n > 24 ? 1.5 : 1.9} class={d.on ? 'on' : ''} />)}
-      </svg>
-      <b>{Math.max(0, left)}</b>
+    <span class="odo" aria-label={String(value)}>
+      {digits.map((d, i) => (
+        <span key={i} class="odo-cell">
+          <span class="odo-strip" style={{ transform: `translateY(-${Number(d) * 10}%)` }}>
+            {'0123456789'.split('').map((n) => <i key={n}>{n}</i>)}
+          </span>
+        </span>
+      ))}
     </span>
   )
 }
 
+/** Shutter with a ring that empties as the roll is used up. */
+function Shutter({ left, total, disabled, onPress, label }) {
+  const r = 44
+  const len = 2 * Math.PI * r
+  const frac = total ? Math.max(0, left) / total : 0
+  return (
+    <button class="shutter2" onClick={onPress} disabled={disabled} aria-label={label}>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r={r} class="ring-bg" />
+        <circle cx="50" cy="50" r={r} class="ring" style={{ strokeDasharray: len, strokeDashoffset: len * (1 - frac) }} />
+      </svg>
+      <span class="shutter2-btn" />
+    </button>
+  )
+}
+
 export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
-  const ratio = (() => {
+  const vp = useViewport()
+  const landscape = vp.w > vp.h * 1.05
+  const base = (() => {
     const r = catalog.aspect_ratios.find((a) => a.id === event.aspect_ratio) || catalog.aspect_ratios[0]
     return r.w / r.h
   })()
+  // Hold the phone sideways and the shot turns sideways with it.
+  const ratio = landscape ? 1 / base : base
   const filters = catalog.filters.filter((f) => event.filters.includes(f.id))
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const rendererRef = useRef(null)
   const streamRef = useRef(null)
-  const live = useRef({ filter: filters[0]?.id || 'none', facing: 'environment', zoom: 1, digital: 1 })
+  const live = useRef({ filter: filters[0]?.id || 'none', facing: 'environment', digital: 1, ratio })
   const [facing, setFacing] = useState('environment')
   const [filter, setFilter] = useState(live.current.filter)
+  const [stamp, setStamp] = useState(null)
   const [error, setError] = useState(null)
   const [ready, setReady] = useState(false)
-  const [thumbs, setThumbs] = useState({})
   const [left, setLeft] = useState(guest.photos_left)
   const [pending, setPending] = useState(0)
   const [last, setLast] = useState(null)
@@ -87,13 +119,15 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
   const [roll, setRoll] = useState(null)
   const [rollIndex, setRollIndex] = useState(0)
   const touchX = useRef(null)
-  const vp = useViewport()
 
   live.current.filter = filter
   live.current.facing = facing
+  live.current.ratio = ratio
 
-  // Biggest box with the event ratio; the controls float over its lower edge when it's tall.
-  const boxW = Math.min(vp.w - 12, (vp.h - 14) * ratio)
+  // Biggest box with the shot ratio. Portrait: controls float over its lower edge.
+  // Landscape: controls get their own column on the right.
+  const DECK = 132
+  const boxW = landscape ? Math.min(vp.w - DECK - 20, (vp.h - 20) * ratio) : Math.min(vp.w - 12, (vp.h - 14) * ratio)
   const boxH = boxW / ratio
 
   useEffect(() => {
@@ -101,13 +135,8 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
       loadFrameFonts()
       ensureFont(catalog, event.frame_font)
     }
-    // Round filter swatches from the sample photo: same look on every phone, no camera cost.
-    loadImage('/static/sample.jpg')
-      .then((img) => setThumbs(renderThumbs(img, filters.map((f) => f.id), { ratio: 1, size: 120 })))
-      .catch(() => {})
   }, [])
 
-  // (Re)start the camera whenever the facing mode changes.
   useEffect(() => {
     let cancelled = false
     async function start() {
@@ -135,7 +164,6 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
         setZoomCaps(caps.zoom && caps.zoom.max > caps.zoom.min ? caps.zoom : null)
         setTorch(!!caps.torch)
         setZoom(1)
-        live.current.zoom = 1
         live.current.digital = 1
         const devices = await navigator.mediaDevices.enumerateDevices().catch(() => [])
         setCams(devices.filter((d) => d.kind === 'videoinput').length)
@@ -151,7 +179,6 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
 
   useEffect(() => () => streamRef.current?.getTracks().forEach((tr) => tr.stop()), [])
 
-  // Render loop: video -> filter -> viewfinder canvas, sized to the box on screen.
   useEffect(() => {
     let raf = 0
     let first = true
@@ -162,13 +189,16 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
       if (document.hidden || !canvas || !v.videoWidth || v.readyState < 2) return
       if (!rendererRef.current) rendererRef.current = createRenderer({ canvas })
       const r = rendererRef.current
+      const L = live.current
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const cap = r.kind === 'cpu' ? 480 : 1400
       const box = canvas.getBoundingClientRect()
-      const h = Math.min(box.height * dpr, cap)
-      const w = h * ratio
-      const L = live.current
-      r.draw(v, { filter: L.filter, crop: zoomedCrop(v.videoWidth, v.videoHeight, ratio, L.digital), mirror: L.facing === 'user', width: w, height: h, seed: (performance.now() % 1000) / 10 })
+      let w = box.width * dpr
+      let h = box.height * dpr
+      const s = Math.min(1, cap / Math.max(w, h))
+      w *= s
+      h *= s
+      r.draw(v, { filter: L.filter, crop: zoomedCrop(v.videoWidth, v.videoHeight, L.ratio, L.digital), mirror: L.facing === 'user', width: w, height: h, seed: (performance.now() % 1000) / 10 })
       if (first) {
         first = false
         setReady(true)
@@ -178,17 +208,12 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
     return () => cancelAnimationFrame(raf)
   }, [facing])
 
-  // Zoom levels: native when the camera exposes zoom, otherwise a digital crop up to 3x.
   const levels = zoomCaps
     ? [zoomCaps.min <= 0.5 ? 0.5 : null, 1, zoomCaps.max >= 2 ? 2 : null, zoomCaps.max >= 5 ? 5 : zoomCaps.max >= 3 ? 3 : null].filter(Boolean)
     : [1, 2, 3]
-  const applyZoom = async (z) => {
-    if (facing !== 'environment' && cams > 1) {
-      setFacing('environment')
-      return
-    }
+  const cycleZoom = async () => {
+    const z = levels[(levels.indexOf(zoom) + 1) % levels.length]
     setZoom(z)
-    live.current.zoom = z
     const track = streamRef.current?.getVideoTracks()[0]
     if (zoomCaps && track) {
       try {
@@ -196,7 +221,7 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
         live.current.digital = 1
         return
       } catch {
-        /* fall back to digital */
+        /* digital below */
       }
     }
     live.current.digital = z
@@ -224,13 +249,14 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
       navigator.vibrate?.(18)
       setShutterFx((n) => n + 1)
       setPending((n) => n + 1)
-      const chosen = live.current.filter
-      const crop = zoomedCrop(v.videoWidth, v.videoHeight, ratio, live.current.digital)
+      const L = live.current
+      const chosen = L.filter
+      const crop = zoomedCrop(v.videoWidth, v.videoHeight, L.ratio, L.digital)
       const cw = v.videoWidth * crop.w
       const ch = v.videoHeight * crop.h
-      const s = Math.min(1, MAX_OUT / Math.max(cw, ch))
+      const sc = Math.min(1, MAX_OUT / Math.max(cw, ch))
       const r = stillRenderer()
-      r.draw(v, { filter: chosen, crop, mirror: live.current.facing === 'user', width: Math.round(cw * s), height: Math.round(ch * s), seed: Math.random() * 100 })
+      r.draw(v, { filter: chosen, crop, mirror: L.facing === 'user', width: Math.round(cw * sc), height: Math.round(ch * sc), seed: Math.random() * 100 })
       let shot = snapshot(r)
       if (useTorch) track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {})
       setScreenFlash(false)
@@ -239,10 +265,10 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
         await ensureFont(catalog, event.frame_font)
         shot = composeFrame(shot, event, catalog)
       }
-      setLast({ src: shot.toDataURL('image/jpeg', 0.5), key: Date.now() })
+      setLast({ src: shot.toDataURL('image/jpeg', 0.5), key: Date.now(), wide: shot.width > shot.height })
       const blob = await canvasToBlob(shot, 0.9)
       try {
-        const res = await uploadPhoto(event.slug, token, blob, { filter: chosen, source: 'camera' })
+        const res = await uploadPhoto(event.slug, token, blob, { filter: chosen, source: 'camera', inner: shot.inner })
         setLeft(res.guest.photos_left)
         onShot?.(res.photo, res.guest)
       } catch (e) {
@@ -258,7 +284,6 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
     }
   }
 
-  // Preview this guest's own roll without leaving the camera.
   const openRoll = async () => {
     try {
       const r = await api(`/api/g/${event.slug}/photos?scope=mine`, { headers: { 'X-Guest-Token': token } })
@@ -271,96 +296,94 @@ export function Camera({ event, catalog, guest, token, t, onClose, onShot }) {
   }
 
   const pick = (id) => {
+    if (id === filter) return
     setFilter(id)
-    document.getElementById(`cf-${id}`)?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    setStamp({ id, key: Date.now() })
+    document.getElementById(`stk-${id}`)?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'center' })
   }
   const step = (dir) => {
     const i = filters.findIndex((f) => f.id === filter)
     const n = filters[Math.min(filters.length - 1, Math.max(0, i + dir))]
-    if (n && n.id !== filter) pick(n.id)
+    if (n) pick(n.id)
   }
   useEffect(() => {
-    document.getElementById(`cf-${filter}`)?.scrollIntoView({ inline: 'center', block: 'nearest' })
-  }, [])
+    document.getElementById(`stk-${filter}`)?.scrollIntoView({ inline: 'center', block: 'center' })
+  }, [landscape])
+
+  const dateLine = formatFrameDate(event.frame_date, event.frame_date_format)
+  const stampIndex = stamp ? filters.findIndex((f) => f.id === stamp.id) : -1
 
   return (
-    <div class="cam" style={{ '--box-w': `${boxW}px`, '--box-h': `${boxH}px` }}>
+    <div class={`cam2 ${landscape ? 'is-land' : 'is-port'}`} style={{ '--box-w': `${boxW}px`, '--box-h': `${boxH}px` }}>
       <video ref={videoRef} playsInline muted autoPlay class="cam-video" />
 
       <div
-        class="vf"
+        class="vf2"
         onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
         onTouchEnd={(e) => {
           const dx = e.changedTouches[0].clientX - (touchX.current ?? 0)
           if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1)
         }}
       >
-        <canvas ref={canvasRef} class="vf-canvas" />
-        <div class="vf-shade-top" />
-        <div class="vf-shade-bottom" />
-        {!ready && !error && <div class="vf-wait"><span class="spinner" /></div>}
-        {shutterFx > 0 && <div key={shutterFx} class="vf-flash" />}
+        <canvas ref={canvasRef} class="vf2-canvas" />
+        <span class="vf2-glass" aria-hidden="true" />
+        {!ready && !error && <div class="vf2-wait"><span class="spinner" /></div>}
+        {shutterFx > 0 && <div key={shutterFx} class="vf2-shutter" />}
+        {stamp && stampIndex >= 0 && (
+          <div key={stamp.key} class="stock-stamp" aria-live="polite">
+            <b>{filters[stampIndex].name}</b>
+            <span>◂ ISO {isoOf(stampIndex)} · {pad2(stampIndex + 1)}/{pad2(filters.length)}</span>
+          </div>
+        )}
         {error && (
-          <div class="vf-error">
+          <div class="vf2-error">
             <Icon name="camera" size={34} stroke={1.4} />
             <p>{error}</p>
             <button class="g-btn" onClick={() => location.reload()}>{t.retry}</button>
           </div>
         )}
-
-        <header class="vf-top">
-          <button class="vf-round" onClick={onClose} aria-label={t.close}><Icon name="back" size={20} stroke={2} /></button>
-          <div class="vf-title">
-            <span class="vf-pill">{event.name}</span>
-            <span class="vf-pill vf-pill-sub">{facing === 'user' ? t.cameraFront : t.cameraBack}</span>
+        <header class="vf2-top">
+          <button class="knob" onClick={onClose} aria-label={t.close}><Icon name="close" size={19} stroke={2} /></button>
+          <div class="counter-window">
+            <Counter value={remaining} />
+            <span class="cw-label">{t.shotsLeft}</span>
           </div>
           {canFlash ? (
-            <button class={`vf-round ${flashOn ? 'on' : ''}`} onClick={() => setFlashOn(!flashOn)} aria-pressed={flashOn} aria-label={flashOn ? t.flashOn : t.flashOff}>
-              <Icon name={flashOn ? 'bolt' : 'boltOff'} size={19} />
+            <button class={`knob ${flashOn ? 'lit' : ''}`} onClick={() => setFlashOn(!flashOn)} aria-pressed={flashOn} aria-label={flashOn ? t.flashOn : t.flashOff}>
+              <Icon name={flashOn ? 'bolt' : 'boltOff'} size={18} />
             </button>
           ) : (
-            <span class="vf-round vf-ghost" />
+            <span class="knob ghost" />
           )}
         </header>
+        <p class="vf2-caption">{event.name}{dateLine ? ` · ${dateLine}` : ''}</p>
       </div>
 
-      <div class="cam-controls">
-        {!error && (
-          <div class="zoom-pill" role="group" aria-label="Zoom">
-            {cams > 1 && (
-              <button class={facing === 'user' ? 'on' : ''} onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')} aria-label={facing === 'user' ? t.cameraBack : t.cameraFront}>
-                <Icon name={facing === 'user' ? 'flip' : 'person'} size={16} />
-              </button>
-            )}
-            {(facing === 'environment' || cams <= 1) &&
-              levels.map((z) => (
-                <button key={z} class={zoom === z ? 'on' : ''} onClick={() => applyZoom(z)}>
-                  {z}x
-                </button>
-              ))}
-          </div>
-        )}
-
+      <div class="deck">
         {filters.length > 1 && (
-          <div class="cf-row" role="listbox" aria-label="Filter">
-            {filters.map((f) => (
-              <button key={f.id} id={`cf-${f.id}`} role="option" aria-selected={f.id === filter} class={`cf ${f.id === filter ? 'on' : ''}`} onClick={() => pick(f.id)}>
-                <span class="cf-dot">{thumbs[f.id] && <img src={thumbs[f.id]} alt="" />}</span>
-                <span class="cf-name">{f.name}</span>
+          <div class="stocks" role="listbox" aria-label="Film">
+            {filters.map((f, i) => (
+              <button key={f.id} id={`stk-${f.id}`} role="option" aria-selected={f.id === filter} class={`stock ${f.id === filter ? 'on' : ''}`} onClick={() => pick(f.id)}>
+                <span class="stock-box" style={stockStyle(f.id)}><i>{isoOf(i)}</i></span>
+                <span class="stock-name">{f.name}</span>
               </button>
             ))}
           </div>
         )}
-
-        <div class="cam-bottom">
-          <button class="roll-btn" onClick={openRoll} aria-label={t.yourRoll}><RollDial left={remaining} total={event.max_photos_per_guest} /></button>
-          <button class="shutter" onClick={shoot} disabled={!ready || busy || remaining <= 0} aria-label={t.shutter}>
-            <span />
+        <div class="deck-row">
+          <button class={`print ${last ? '' : 'empty'} ${last?.wide ? 'wide' : ''}`} onClick={openRoll} aria-label={t.yourRoll}>
+            {last ? <img key={last.key} src={last.src} alt="" /> : <Icon name="image" size={18} />}
+            {pending > 0 && <span class="print-pending">{pending}</span>}
           </button>
-          <button class={`last-shot ${last ? '' : 'empty'}`} onClick={openRoll} aria-label={t.yourRoll}>
-            {last && <img key={last.key} src={last.src} alt="" />}
-            {pending > 0 && <span class="last-pending">{pending}</span>}
-          </button>
+          <Shutter left={remaining} total={event.max_photos_per_guest} disabled={!ready || busy || remaining <= 0} onPress={shoot} label={t.shutter} />
+          <div class="deck-side">
+            {!error && <button class="knob small" onClick={cycleZoom} aria-label="Zoom">{zoom}×</button>}
+            {cams > 1 && (
+              <button class="knob" onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')} aria-label={facing === 'user' ? t.cameraBack : t.cameraFront}>
+                <Icon name="flip" size={19} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

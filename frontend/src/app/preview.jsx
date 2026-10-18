@@ -3,7 +3,8 @@ import { centerCrop, loadImage, PRESETS, snapshot, sourceSize, stillRenderer } f
 import { composeFrame, ensureFont, loadFrameFonts } from '../lib/frame.js'
 import { strings } from '../lib/i18n.js'
 import { pad2 } from '../lib/format.js'
-import { Hero } from '../guest/Hero.jsx'
+import { Hero, themeVars } from '../guest/Hero.jsx'
+import { WatermarkPreview } from './steps.jsx'
 import { Icon } from '../ui/icons.jsx'
 
 let samplePromise = null
@@ -47,8 +48,8 @@ function GuestPhone({ draft, catalog, joined }) {
     guests_count: joined ? 1 : 0,
   }
   return (
-    <Phone dark={draft.theme !== 'scrapbook'}>
-      <div class={`gtheme theme-${draft.theme} preview-guest`}>
+    <Phone dark={catalog.themes.find((x) => x.id === draft.theme)?.dark !== false}>
+      <div class={`gtheme theme-${draft.theme} preview-guest`} style={themeVars(draft)}>
         <Hero event={event} t={t} coverUrl={draft.coverPreview || null} />
         <div class="gh-actions">
           {joined ? (
@@ -127,7 +128,7 @@ function FramePreview({ draft, catalog, img }) {
   )
 }
 
-export function WizardPreview({ stepId, draft, catalog, focusFilter }) {
+export function WizardPreview({ stepId, draft, catalog, focusFilter, eventId }) {
   const img = useSample()
   if (stepId === 'ratio') return <CameraPhone draft={draft} catalog={catalog} filter="none" img={img} />
   if (stepId === 'filters') {
@@ -135,7 +136,24 @@ export function WizardPreview({ stepId, draft, catalog, focusFilter }) {
     return <CameraPhone draft={draft} catalog={catalog} filter={f} img={img} />
   }
   if (stepId === 'frame') return <FramePreview draft={draft} catalog={catalog} img={img} />
+  if (stepId === 'watermark') return <WatermarkPreview draft={draft} eventId={eventId} />
+  if (stepId === 'display') return <DisplayMock draft={draft} catalog={catalog} />
   return <GuestPhone draft={draft} catalog={catalog} joined={stepId === 'settings' || stepId === 'schedule' || stepId === 'confirm'} />
 }
 
 export { PRESETS }
+
+/** Small schematic of the live display with the chosen layout and palette. */
+function DisplayMock({ draft, catalog }) {
+  const p = catalog.display_palettes.find((x) => x.id === draft.display_palette) || catalog.display_palettes[0]
+  const shots = ['/static/guest-1.jpg', '/static/guest-2.jpg', '/static/sample.jpg', '/static/guest-3.jpg', '/static/guest-4.jpg', '/static/guest-5.jpg']
+  return (
+    <div class={`dmock dm-${draft.display_layout}`} style={{ '--bg': p.bg, '--panel': p.panel, '--ink': p.ink, '--accent': p.accent }}>
+      <div class="dm-screen">
+        {shots.map((s, i) => <img key={i} src={s} alt="" class={`dm-shot s${i}`} />)}
+        <div class="dm-ticket"><b>{draft.couple_names || draft.name || 'Nama Acara'}</b><span class="dm-qr" /></div>
+      </div>
+      <p class="pv-table-note">{catalog.display_layouts.find((l) => l.id === draft.display_layout)?.name.id} · {p.name}</p>
+    </div>
+  )
+}

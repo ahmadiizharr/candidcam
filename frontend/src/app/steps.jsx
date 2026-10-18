@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { api } from '../lib/api.js'
 import { renderThumbs } from '../lib/filters.js'
 import { fontFor, loadFrameFonts, paperFor } from '../lib/frame.js'
+import { strings } from '../lib/i18n.js'
+import { Hero, themeVars } from '../guest/Hero.jsx'
 import { fromLocalInput, toLocalInput } from '../lib/format.js'
 import { Icon } from '../ui/icons.jsx'
 import { Seg, SwitchRow, toast } from '../ui/ui.jsx'
@@ -11,14 +13,18 @@ import { ratioOf, useSample } from './preview.jsx'
 
 export const STEPS = [
   { id: 'name', label: 'Nama Acara', icon: 'sparkle', title: 'Acara apa yang mau kamu abadikan?', sub: 'Nama ini akan tampil di halaman utama tamu.' },
+  { id: 'theme', label: 'Tema & Warna', icon: 'frame', title: 'Pilih wajah halaman tamu', sub: 'Tema hanya mengubah halaman home tamu. Warna aksen bisa kamu ganti sesukamu.' },
   { id: 'cover', label: 'Foto Sampul', icon: 'image', title: 'Pilih foto sampul acara', sub: 'Foto ini jadi kesan pertama buat tamu kamu. Opsional, bisa diubah kapan saja.' },
-  { id: 'ratio', label: 'Ukuran Foto', icon: 'ratio', title: 'Mau ukuran hasil foto yang mana?', sub: 'Foto tamu akan otomatis dipotong mengikuti rasio ini saat difoto.' },
+  { id: 'ratio', label: 'Ukuran Foto', icon: 'ratio', title: 'Mau ukuran hasil foto yang mana?', sub: 'Foto dipotong mengikuti rasio ini. Saat HP dimiringkan, rasionya ikut berputar jadi lanskap.' },
   { id: 'filters', label: 'Filter Kamera', icon: 'film', title: 'Filter apa yang bisa dipakai tamu?', sub: 'Tamu bisa menjepret dengan gaya ini saat mengambil foto. Klik untuk aktif/nonaktifkan.' },
   { id: 'frame', label: 'Bingkai Foto', icon: 'frame', title: 'Mau pakai bingkai foto?', sub: 'Bingkai ini akan menempel permanen di setiap foto yang diambil tamu.' },
+  { id: 'watermark', label: 'Watermark', icon: 'sparkle', title: 'Tanda tangan di setiap foto', sub: 'Teks, tanggal acara, atau logo PNG. Foto asli tanpa watermark tetap tersimpan.' },
   { id: 'settings', label: 'Pengaturan Foto', icon: 'users', title: 'Atur kuota & foto acaramu', sub: 'Pilih perkiraan jumlah peserta dan berapa foto yang didapat tiap tamu.' },
   { id: 'schedule', label: 'Jadwal', icon: 'calendar', title: 'Kapan acara berlangsung?', sub: 'Opsional. Kamu bisa lewati dan atur ini nanti.' },
   { id: 'confirm', label: 'Konfirmasi', icon: 'check', title: 'Semua siap?', sub: 'Cek sekali lagi sebelum acara dibuat.' },
 ]
+
+export const DISPLAY_STEP = { id: 'display', label: 'Tampilan Display', icon: 'monitor', title: 'Gaya layar acara', sub: 'Atur tata letak dan warna Live Display di proyektor atau TV.' }
 
 export function slugify(name) {
   return name
@@ -62,15 +68,31 @@ export function newDraft(catalog) {
     enable_likes: true,
     starts_at: null,
     ends_at: null,
+    accent_color: null,
+    display_layout: 'mosaic',
+    display_palette: 'midnight',
+    wm_enabled: false,
+    wm_mode: 'text',
+    wm_text: '',
+    wm_show_date: true,
+    wm_font: 'playfair',
+    wm_color: '#ffffff',
+    wm_opacity: 85,
+    wm_size: 'md',
+    wm_pos_portrait: 'bottom-right',
+    wm_pos_landscape: 'bottom-right',
+    allow_clean_download: true,
     coverFile: null,
     coverPreview: null,
+    wmLogoFile: null,
+    wmLogoPreview: null,
   }
 }
 
 /** The API body for a draft (drops UI-only fields). */
 export function draftBody(d) {
-  const { slugTouched, coverFile, coverPreview, coverRemoved, slugState, ...rest } = d
-  for (const k of ['couple_names', 'frame_caption', 'frame_date', 'frame_hashtag']) rest[k] = rest[k]?.trim() || null
+  const { slugTouched, coverFile, coverPreview, coverRemoved, slugState, wmLogoFile, wmLogoPreview, wmLogoRemoved, wm_image_url, ...rest } = d
+  for (const k of ['couple_names', 'frame_caption', 'frame_date', 'frame_hashtag', 'wm_text']) rest[k] = rest[k]?.trim() || null
   return rest
 }
 
@@ -143,28 +165,6 @@ export function StepName({ draft, set, eventId, host }) {
         <span class="label">Bahasa Halaman Tamu</span>
         <Seg value={draft.language} onChange={(language) => set({ language })} options={[{ value: 'id', label: 'Bahasa Indonesia' }, { value: 'en', label: 'English' }]} />
         <p class="hint">Bahasa halaman tamu ini tetap, tamu tidak bisa menggantinya sendiri.</p>
-      </div>
-      <div class="field">
-        <span class="label">Tema Halaman Home</span>
-        <div class="theme-cards">
-          <button type="button" class={`theme-card tc-dark ${draft.theme === 'dark_elegant' ? 'on' : ''}`} onClick={() => set({ theme: 'dark_elegant' })} aria-pressed={draft.theme === 'dark_elegant'}>
-            <span class="tc-art">
-              <span class="tc-strip l" /><span class="tc-strip r" />
-              <span class="tc-name">Nadia &amp; Rafi</span>
-              <span class="tc-btn">Open Camera</span>
-            </span>
-            <span class="tc-label">Dark Elegant</span>
-          </button>
-          <button type="button" class={`theme-card tc-scrap ${draft.theme === 'scrapbook' ? 'on' : ''}`} onClick={() => set({ theme: 'scrapbook' })} aria-pressed={draft.theme === 'scrapbook'}>
-            <span class="tc-art">
-              <span class="tc-polaroid" />
-              <span class="tc-name">Nadia &amp; Rafi</span>
-              <span class="tc-btn">Open Camera</span>
-            </span>
-            <span class="tc-label">Scrapbook</span>
-          </button>
-        </div>
-        <p class="hint">Hanya mengubah tampilan halaman home tamu, layar kamera tetap sama.</p>
       </div>
     </div>
   )
@@ -455,10 +455,260 @@ export function stepProblem(id, draft) {
     if (draft.slugState && draft.slugState !== 'ok') return 'Link tamu belum bisa dipakai.'
   }
   if (id === 'filters' && !draft.filters.length) return 'Pilih minimal 1 filter.'
+  if (id === 'watermark' && draft.wm_enabled && draft.wm_mode === 'image' && !draft.wmLogoPreview) return 'Unggah logo PNG untuk watermark, atau pilih mode teks.'
+  if (id === 'watermark' && draft.wm_enabled && draft.wm_mode === 'text' && !draft.wm_text?.trim() && !draft.wm_show_date) return 'Isi teks watermark atau nyalakan tanggal acara.'
   if (id === 'schedule' && draft.starts_at && draft.ends_at && draft.ends_at <= draft.starts_at) return 'Waktu selesai harus setelah waktu mulai.'
   return null
 }
 
 export function fontName(catalog, id) {
   return fontFor(catalog, id).name.id
+}
+
+
+// ---------------------------------------------------------------- theme
+const SAMPLE_EVENT = { name: 'Nadia & Rafi', guests_count: 3, participant_limit: 50, id: 'sample' }
+
+export function AccentPicker({ value, onChange, swatches, fallback, label = 'Warna aksen' }) {
+  return (
+    <div class="field">
+      <span class="label">{label}</span>
+      <div class="color-row">
+        <button type="button" class={`swatch swatch-default ${!value ? 'on' : ''}`} style={{ background: fallback }} onClick={() => onChange(null)} title="Bawaan tema" aria-label="Bawaan tema">
+          <span>A</span>
+        </button>
+        {swatches.map((c) => (
+          <button type="button" key={c} class={`swatch ${value === c ? 'on' : ''}`} style={{ background: c }} onClick={() => onChange(c)} aria-label={c} />
+        ))}
+        <label class="swatch swatch-custom" title="Warna lain">
+          <input type="color" value={value || fallback} onInput={(e) => onChange(e.currentTarget.value.toLowerCase())} />
+          <Icon name="plus" size={14} />
+        </label>
+      </div>
+    </div>
+  )
+}
+
+export function StepTheme({ draft, set, catalog }) {
+  const t = strings(draft.language)
+  const theme = catalog.themes.find((x) => x.id === draft.theme) || catalog.themes[0]
+  return (
+    <div class="step-fields">
+      <div class="theme-gallery">
+        {catalog.themes.map((th) => {
+          const ev = { ...SAMPLE_EVENT, theme: th.id, accent_color: th.id === draft.theme ? draft.accent_color : null }
+          return (
+            <button type="button" key={th.id} class={`theme-tile ${draft.theme === th.id ? 'on' : ''}`} aria-pressed={draft.theme === th.id} onClick={() => set({ theme: th.id })}>
+              <span class="theme-mini" aria-hidden="true">
+                <span class={`gtheme theme-${th.id} theme-mini-inner`} style={themeVars(ev)}>
+                  <Hero event={ev} t={t} coverUrl="/static/sample-cover.jpg" />
+                </span>
+              </span>
+              <span class="theme-meta">
+                <strong>{th.name}</strong>
+                <small>{th.blurb?.id}</small>
+              </span>
+              <span class="cc-check"><Icon name="check" size={14} stroke={2.4} /></span>
+            </button>
+          )
+        })}
+      </div>
+      <AccentPicker value={draft.accent_color} onChange={(c) => set({ accent_color: c })} swatches={catalog.accents} fallback={theme.accent} />
+      <p class="hint">Warna aksen dipakai untuk tombol, garis, dan ornamen tema. Pilih “A” untuk warna bawaan tema.</p>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- watermark
+const POS_GRID = [
+  ['top-left', 'top-center', 'top-right'],
+  [null, 'center', null],
+  ['bottom-left', 'bottom-center', 'bottom-right'],
+]
+
+function PositionGrid({ value, onChange, landscape }) {
+  return (
+    <div class={`pos-grid ${landscape ? 'land' : ''}`} role="radiogroup">
+      {POS_GRID.flat().map((p, i) =>
+        p ? (
+          <button type="button" key={p} role="radio" aria-checked={value === p} class={value === p ? 'on' : ''} onClick={() => onChange(p)} aria-label={p}>
+            <i />
+          </button>
+        ) : (
+          <span key={i} />
+        ),
+      )}
+    </div>
+  )
+}
+
+export function StepWatermark({ draft, set, catalog }) {
+  const input = useRef(null)
+  useEffect(() => loadFrameFonts(), [])
+  const take = (file) => {
+    if (!file) return
+    if (!/image\/(png|webp)/.test(file.type)) return toast('Logo harus berupa PNG (sebaiknya latar transparan)', 'error')
+    if (file.size > 5 * 1024 * 1024) return toast('Ukuran logo maksimal 5 MB', 'error')
+    if (draft.wmLogoPreview?.startsWith('blob:')) URL.revokeObjectURL(draft.wmLogoPreview)
+    set({ wmLogoFile: file, wmLogoPreview: URL.createObjectURL(file), wmLogoRemoved: false })
+  }
+  const on = draft.wm_enabled
+  return (
+    <div class="step-fields">
+      <div class="switches">
+        <SwitchRow title="Pasang watermark" hint="Tampil di foto yang dilihat & diunduh tamu, juga di Live Display." checked={on} onChange={(v) => set({ wm_enabled: v })} />
+      </div>
+      {on && (
+        <div class="frame-options">
+          <div class="field">
+            <span class="label">Isi watermark</span>
+            <Seg value={draft.wm_mode} onChange={(v) => set({ wm_mode: v })} options={catalog.watermark.modes.map((m) => ({ value: m.id, label: m.name.id }))} />
+          </div>
+          {draft.wm_mode === 'text' ? (
+            <>
+              <div class="field">
+                <label for="wm-text">Kata-kata <span class="muted">(opsional)</span></label>
+                <input id="wm-text" class="input" maxLength={60} placeholder="cth. Nadia & Rafi · Bandung" value={draft.wm_text} onInput={(e) => set({ wm_text: e.currentTarget.value })} />
+              </div>
+              <SwitchRow title="Tambahkan tanggal acara" hint="Diambil dari jadwal acara, atau tanggal bingkai bila jadwal kosong." checked={draft.wm_show_date} onChange={(v) => set({ wm_show_date: v })} />
+              <div class="field">
+                <span class="label">Font</span>
+                <div class="font-row">
+                  {catalog.frame_fonts.map((f) => (
+                    <button type="button" key={f.id} class={`font-chip ${draft.wm_font === f.id ? 'on' : ''}`} aria-pressed={draft.wm_font === f.id} onClick={() => set({ wm_font: f.id })}>
+                      <span style={{ fontFamily: `"${f.family}"`, fontStyle: f.style, fontWeight: f.weight }}>Aa</span>
+                      <small>{f.name.id}</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div class="field">
+                <span class="label">Warna teks</span>
+                <div class="color-row">
+                  {['#ffffff', '#f4efe6', '#1d1d1d', '#e0a94a', '#c2185b', '#2f6fed'].map((c) => (
+                    <button type="button" key={c} class={`swatch ${draft.wm_color === c ? 'on' : ''}`} style={{ background: c }} onClick={() => set({ wm_color: c })} aria-label={c} />
+                  ))}
+                  <label class="swatch swatch-custom" title="Warna lain">
+                    <input type="color" value={draft.wm_color} onInput={(e) => set({ wm_color: e.currentTarget.value.toLowerCase() })} />
+                    <Icon name="plus" size={14} />
+                  </label>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div class="field">
+              <span class="label">Logo PNG</span>
+              <div class={`logo-drop ${draft.wmLogoPreview ? 'has' : ''}`} onClick={() => input.current.click()} role="button" tabIndex={0}>
+                {draft.wmLogoPreview ? <img src={draft.wmLogoPreview} alt="Logo watermark" /> : <span><Icon name="upload" size={18} /> Unggah PNG transparan</span>}
+                <input ref={input} type="file" accept="image/png,image/webp" hidden onChange={(e) => { take(e.currentTarget.files[0]); e.currentTarget.value = '' }} />
+              </div>
+              {draft.wmLogoPreview && (
+                <button type="button" class="btn btn-sm btn-ghost btn-danger" style="justify-self:start" onClick={() => set({ wmLogoFile: null, wmLogoPreview: null, wmLogoRemoved: true })}>
+                  <Icon name="trash" size={15} /> Hapus logo
+                </button>
+              )}
+            </div>
+          )}
+          <div class="two-col">
+            <div class="field">
+              <span class="label">Ukuran</span>
+              <Seg value={draft.wm_size} onChange={(v) => set({ wm_size: v })} options={catalog.watermark.sizes.map((z) => ({ value: z.id, label: z.name.id }))} />
+            </div>
+            <div class="field">
+              <label for="wm-op">Kepekatan <span class="muted mono">{draft.wm_opacity}%</span></label>
+              <input id="wm-op" type="range" class="range" min={15} max={100} step={5} value={draft.wm_opacity} onInput={(e) => set({ wm_opacity: +e.currentTarget.value })} style={{ '--p': `${((draft.wm_opacity - 15) / 85) * 100}%` }} />
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="field">
+              <span class="label">Posisi di foto potret</span>
+              <PositionGrid value={draft.wm_pos_portrait} onChange={(v) => set({ wm_pos_portrait: v })} />
+            </div>
+            <div class="field">
+              <span class="label">Posisi di foto lanskap</span>
+              <PositionGrid value={draft.wm_pos_landscape} onChange={(v) => set({ wm_pos_landscape: v })} landscape />
+            </div>
+          </div>
+          <SwitchRow title="Tamu boleh unduh tanpa watermark" hint="Kamu sebagai penyelenggara selalu bisa mengunduh foto asli." checked={draft.allow_clean_download} onChange={(v) => set({ allow_clean_download: v })} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Watermark rendered by the server on sample photos, so the preview is exactly what guests get. */
+export function WatermarkPreview({ draft, eventId }) {
+  const [urls, setUrls] = useState({})
+  const key = JSON.stringify([draft.wm_enabled, draft.wm_mode, draft.wm_text, draft.wm_show_date, draft.wm_font, draft.wm_color, draft.wm_opacity, draft.wm_size, draft.wm_pos_portrait, draft.wm_pos_landscape, draft.wmLogoPreview, draft.starts_at, draft.frame_date, draft.frame_date_format])
+  useEffect(() => {
+    if (!draft.wm_enabled) return setUrls({})
+    let alive = true
+    const made = []
+    const timer = setTimeout(async () => {
+      const next = {}
+      for (const orientation of ['portrait', 'landscape']) {
+        const form = new FormData()
+        form.append('settings', JSON.stringify({ ...draftBody(draft), wm_enabled: true }))
+        form.append('orientation', orientation)
+        if (draft.wm_mode === 'image' && draft.wmLogoFile) form.append('image', draft.wmLogoFile)
+        else if (eventId) form.append('event_id', eventId)
+        try {
+          const res = await fetch('/api/watermark/preview', { method: 'POST', body: form, headers: { 'X-Requested-With': 'candid' } })
+          if (!res.ok) continue
+          const url = URL.createObjectURL(await res.blob())
+          made.push(url)
+          next[orientation] = url
+        } catch {
+          /* preview is best effort */
+        }
+      }
+      if (alive) setUrls(next)
+    }, 450)
+    return () => {
+      alive = false
+      clearTimeout(timer)
+      setTimeout(() => made.forEach((u) => URL.revokeObjectURL(u)), 2000)
+    }
+  }, [key])
+  if (!draft.wm_enabled) {
+    return <div class="pv-table"><img class="pv-print" src="/static/sample.jpg" alt="" style="max-width:70%" /><p class="pv-table-note">Watermark mati — foto tersimpan apa adanya.</p></div>
+  }
+  return (
+    <div class="wm-previews">
+      <figure class="wm-pv portrait">{urls.portrait ? <img src={urls.portrait} alt="Pratinjau potret" /> : <span class="spinner" />}<figcaption>Potret</figcaption></figure>
+      <figure class="wm-pv landscape">{urls.landscape ? <img src={urls.landscape} alt="Pratinjau lanskap" /> : <span class="spinner" />}<figcaption>Lanskap</figcaption></figure>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- display (settings only)
+export function StepDisplay({ draft, set, catalog, eventId }) {
+  return (
+    <div class="step-fields">
+      <div class="layout-cards">
+        {catalog.display_layouts.map((l) => (
+          <button type="button" key={l.id} class={`layout-card ${draft.display_layout === l.id ? 'on' : ''}`} aria-pressed={draft.display_layout === l.id} onClick={() => set({ display_layout: l.id })}>
+            <span class={`layout-art la-${l.id}`} aria-hidden="true"><i /><i /><i /><i /><i /><i /></span>
+            <strong>{l.name.id}</strong>
+            <small>{l.blurb.id}</small>
+            <span class="cc-check"><Icon name="check" size={14} stroke={2.4} /></span>
+          </button>
+        ))}
+      </div>
+      <div class="field">
+        <span class="label">Palet warna</span>
+        <div class="palette-row">
+          {catalog.display_palettes.map((p) => (
+            <button type="button" key={p.id} class={`palette ${draft.display_palette === p.id ? 'on' : ''}`} aria-pressed={draft.display_palette === p.id} onClick={() => set({ display_palette: p.id })} title={p.name}>
+              <span style={{ background: p.bg }}><i style={{ background: p.panel }} /><b style={{ background: p.accent }} /></span>
+              <small>{p.name}</small>
+            </button>
+          ))}
+        </div>
+      </div>
+      {eventId && (
+        <a class="btn btn-sm" style="justify-self:start" href={`/display/${eventId}`} target="_blank" rel="noopener"><Icon name="external" size={15} /> Lihat Live Display</a>
+      )}
+    </div>
+  )
 }

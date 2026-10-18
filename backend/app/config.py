@@ -14,6 +14,7 @@ class Settings:
     data_dir: Path = field(default_factory=lambda: _env_path("CANDID_DATA_DIR", ROOT / "backend" / "data"))
     dist_dir: Path = field(default_factory=lambda: _env_path("CANDID_DIST_DIR", ROOT / "frontend" / "dist"))
     catalog_file: Path = ROOT / "shared" / "catalog.json"
+    fonts_dir: Path = ROOT / "shared" / "fonts"
     public_base_url: str = field(default_factory=lambda: os.environ.get("CANDID_PUBLIC_URL", "http://localhost:8094").rstrip("/"))
     session_days: int = 30
     max_upload_mb: int = 15

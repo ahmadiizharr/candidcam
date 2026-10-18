@@ -68,6 +68,8 @@ def save_photo(data: bytes, folder: Path, photo_id: str) -> tuple[int, int]:
 def remove_photo_files(folder: Path, photo_id: str) -> None:
     for name in (f"{photo_id}.jpg", f"{photo_id}_t.webp"):
         (folder / name).unlink(missing_ok=True)
+    for f in folder.glob(f"{photo_id}*.w*.*"):
+        f.unlink(missing_ok=True)
 
 
 SORTS = {
@@ -86,6 +88,7 @@ def list_photos(
     guest_id: str | None = None,
     viewer_id: str | None = None,
     limit: int | None = None,
+    wm: str | None = None,
 ) -> list[dict]:
     order = SORTS.get(sort, SORTS["newest"])
     sql = """SELECT p.*, g.name AS guest_name,
@@ -99,17 +102,18 @@ def list_photos(
     if limit:
         sql += " LIMIT ?"
         args.append(limit)
-    return [photo_view(row) for row in db.all(sql, *args)]
+    return [photo_view(row, wm) for row in db.all(sql, *args)]
 
 
-def photo_view(row) -> dict:
+def photo_view(row, wm: str | None = None) -> dict:
+    """`wm` is the event's watermark version: when set, shared URLs point at marked copies."""
     base = f"/media/{row['event_id']}/{row['id']}"
     return {
         "id": row["id"],
         "guest_id": row["guest_id"],
         "guest_name": row["guest_name"],
-        "url": f"{base}.jpg",
-        "thumb_url": f"{base}_t.webp",
+        "url": f"{base}.w{wm}.jpg" if wm else f"{base}.jpg",
+        "thumb_url": f"{base}_t.w{wm}.webp" if wm else f"{base}_t.webp",
         "width": row["width"],
         "height": row["height"],
         "filter": row["filter"],

@@ -6,10 +6,16 @@ import { Icon } from '../ui/icons.jsx'
 import { copyText, toast, toastError } from '../ui/ui.jsx'
 import { WizardPreview } from './preview.jsx'
 import { Link, navigate } from './router.jsx'
-import { draftBody, fontName, newDraft, STEPS, StepCover, StepFilters, StepFrame, StepName, StepRatio, StepSchedule, StepSettings, stepProblem } from './steps.jsx'
+import { draftBody, fontName, newDraft, STEPS, StepCover, StepFilters, StepFrame, StepName, StepRatio, StepSchedule, StepSettings, StepTheme, StepWatermark, stepProblem } from './steps.jsx'
 
 const STORE = 'candid:wizard'
-const BODY = { name: StepName, cover: StepCover, ratio: StepRatio, filters: StepFilters, frame: StepFrame, settings: StepSettings, schedule: StepSchedule }
+const BODY = { name: StepName, theme: StepTheme, cover: StepCover, ratio: StepRatio, filters: StepFilters, frame: StepFrame, watermark: StepWatermark, settings: StepSettings, schedule: StepSchedule }
+
+export async function uploadLogo(eventId, file) {
+  const form = new FormData()
+  form.append('image', file, 'logo.png')
+  return api(`/api/events/${eventId}/watermark`, { method: 'POST', form })
+}
 
 export async function uploadCover(eventId, file) {
   const form = new FormData()
@@ -20,7 +26,7 @@ export async function uploadCover(eventId, file) {
 function loadSaved(catalog) {
   try {
     const saved = JSON.parse(sessionStorage.getItem(STORE) || 'null')
-    if (saved?.draft) return { ...newDraft(catalog), ...saved.draft, coverFile: null, coverPreview: null, slugState: undefined, step: saved.step || 0 }
+    if (saved?.draft) return { ...newDraft(catalog), ...saved.draft, coverFile: null, coverPreview: null, wmLogoFile: null, wmLogoPreview: null, slugState: undefined, step: saved.step || 0 }
   } catch {
     /* ignore */
   }
@@ -72,6 +78,13 @@ export function Wizard({ catalog }) {
           ev = await uploadCover(ev.id, draft.coverFile)
         } catch (e) {
           toast(`Acara dibuat, tapi foto sampul gagal diunggah: ${e.message}`, 'error')
+        }
+      }
+      if (draft.wm_mode === 'image' && draft.wmLogoFile) {
+        try {
+          ev = await uploadLogo(ev.id, draft.wmLogoFile)
+        } catch (e) {
+          toast(`Logo watermark gagal diunggah: ${e.message}`, 'error')
         }
       }
       sessionStorage.removeItem(STORE)
@@ -128,7 +141,7 @@ export function Wizard({ catalog }) {
         </footer>
       </div>
       <aside class="wz-preview" aria-label="Pratinjau">
-        <p class="kicker">Pratinjau {s.id === 'frame' ? 'hasil foto' : s.id === 'ratio' || s.id === 'filters' ? 'kamera tamu' : 'halaman tamu'}</p>
+        <p class="kicker">Pratinjau {s.id === 'frame' || s.id === 'watermark' ? 'hasil foto' : s.id === 'ratio' || s.id === 'filters' ? 'kamera tamu' : 'halaman tamu'}</p>
         <WizardPreview stepId={s.id} draft={draft} catalog={catalog} focusFilter={focusFilter} />
       </aside>
     </div>
@@ -154,18 +167,19 @@ function Summary({ draft, catalog, host, go }) {
       <Row label="Nama acara" value={<strong>{draft.name}</strong>} onEdit={() => go(0)} />
       {draft.couple_names?.trim() && <Row label="Nama mempelai" value={draft.couple_names} onEdit={() => go(0)} />}
       <Row label="Link tamu" value={<span class="mono">{host}/{draft.slug}</span>} onEdit={() => go(0)} />
-      <Row label="Tampilan" value={`${theme} · ${draft.language === 'en' ? 'English' : 'Bahasa Indonesia'}`} onEdit={() => go(0)} />
-      <Row label="Foto sampul" value={draft.coverPreview ? <img class="sum-thumb" src={draft.coverPreview} alt="" /> : <span class="muted">Belum ada</span>} onEdit={() => go(1)} />
-      <Row label="Ukuran foto" value={`${ratio.id} · ${ratio.name.id}`} onEdit={() => go(2)} />
-      <Row label="Filter" value={`${draft.filters.length} filter kamera aktif`} onEdit={() => go(3)} />
-      <Row label="Bingkai" value={draft.frame_style === 'polaroid' ? `Polaroid · ${fontName(catalog, draft.frame_font)}${draft.frame_caption ? ` · “${draft.frame_caption}”` : ''}` : 'Tanpa bingkai'} onEdit={() => go(4)} />
-      <Row label="Kuota" value={`${draft.participant_limit === null ? 'Tamu tanpa batas' : `Hingga ${draft.participant_limit} tamu`} · maks ${draft.max_photos_per_guest} foto per tamu`} onEdit={() => go(5)} />
+      <Row label="Tampilan" value={<span class="sum-theme">{theme}{draft.accent_color && <i style={{ background: draft.accent_color }} />} · {draft.language === 'en' ? 'English' : 'Bahasa Indonesia'}</span>} onEdit={() => go(1)} />
+      <Row label="Foto sampul" value={draft.coverPreview ? <img class="sum-thumb" src={draft.coverPreview} alt="" /> : <span class="muted">Belum ada</span>} onEdit={() => go(2)} />
+      <Row label="Ukuran foto" value={`${ratio.id} · ${ratio.name.id}`} onEdit={() => go(3)} />
+      <Row label="Filter" value={`${draft.filters.length} filter kamera aktif`} onEdit={() => go(4)} />
+      <Row label="Bingkai" value={draft.frame_style === 'polaroid' ? `Polaroid · ${fontName(catalog, draft.frame_font)}${draft.frame_caption ? ` · “${draft.frame_caption}”` : ''}` : 'Tanpa bingkai'} onEdit={() => go(5)} />
+      <Row label="Watermark" value={draft.wm_enabled ? (draft.wm_mode === 'image' ? 'Logo PNG' : [draft.wm_text?.trim(), draft.wm_show_date ? 'tanggal acara' : ''].filter(Boolean).join(' + ')) + (draft.allow_clean_download ? ' · tamu boleh unduh asli' : ' · unduhan tamu selalu ber-watermark') : 'Tanpa watermark'} onEdit={() => go(6)} />
+      <Row label="Kuota" value={`${draft.participant_limit === null ? 'Tamu tanpa batas' : `Hingga ${draft.participant_limit} tamu`} · maks ${draft.max_photos_per_guest} foto per tamu`} onEdit={() => go(7)} />
       <Row
         label="Galeri"
         value={<>Tamu {yes(draft.guest_can_see_others)} melihat foto tamu lain · {yes(draft.allow_gallery_upload)} upload dari galeri · like {draft.enable_likes ? 'aktif' : 'mati'}</>}
-        onEdit={() => go(5)}
+        onEdit={() => go(7)}
       />
-      <Row label="Jadwal" value={draft.starts_at || draft.ends_at ? `${draft.starts_at ? formatDateTime(draft.starts_at) : '…'} – ${draft.ends_at ? formatDateTime(draft.ends_at) : '…'}` : <span class="muted">Jadwal belum diatur, kamera langsung dibuka</span>} onEdit={() => go(6)} />
+      <Row label="Jadwal" value={draft.starts_at || draft.ends_at ? `${draft.starts_at ? formatDateTime(draft.starts_at) : '…'} – ${draft.ends_at ? formatDateTime(draft.ends_at) : '…'}` : <span class="muted">Jadwal belum diatur, kamera langsung dibuka</span>} onEdit={() => go(8)} />
       <p class="notice"><Icon name="calendar" size={16} /> Foto tersimpan {catalog.retention_months} bulan sejak foto pertama dari tamu, lalu otomatis terhapus.</p>
     </div>
   )

@@ -12,7 +12,7 @@ def test_new_event_gets_sensible_defaults_and_a_display_passcode(client):
     assert ev["frame_style"] == "none"
     assert ev["participant_limit"] == 5
     assert ev["max_photos_per_guest"] == 10
-    assert len(ev["filters"]) == 15
+    assert ev["filters"] == [f["id"] for f in client.get("/api/catalog").json()["filters"]]
     assert ev["display_passcode"].isdigit() and len(ev["display_passcode"]) == 6
     assert ev["status"] == "open"
     listed = client.get("/api/events").json()["events"]

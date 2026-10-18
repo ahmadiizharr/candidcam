@@ -24,6 +24,12 @@ export const PRESETS = {
   golden_hour: { exposure: 0.08, temp: 0.55, tint: 0.07, contrast: 1.04, curve: 0.2, saturation: 1.16, glow: 0.3, high: [1, 0.72, 0.36], highAmt: 0.55, shadow: [0.45, 0.28, 0.2], shadowAmt: 0.3, vignette: 0.28 },
   bright_airy: { exposure: 0.32, contrast: 0.86, saturation: 0.9, temp: -0.06, tint: 0.02, fade: 0.06, high: [0.96, 0.98, 1], highAmt: 0.2, glow: 0.1 },
   soft_glow: { exposure: 0.06, contrast: 0.95, saturation: 1.02, glow: 0.6, smooth: 0.3, high: [1, 0.88, 0.92], highAmt: 0.3, temp: 0.06, vignette: 0.12 },
+  mono_classic: { exposure: 0.02, contrast: 1.18, curve: 0.35, saturation: 0, vignette: 0.32, grain: 0.05 },
+  sunlit_200: { exposure: 0.08, temp: 0.35, tint: 0.06, contrast: 1.05, curve: 0.2, saturation: 1.2, high: [1, 0.8, 0.45], highAmt: 0.4, shadow: [0.4, 0.25, 0.2], shadowAmt: 0.25, grain: 0.03 },
+  pastel_portrait: { exposure: 0.18, contrast: 0.85, saturation: 0.78, fade: 0.1, smooth: 0.35, high: [1, 0.86, 0.9], highAmt: 0.35, shadow: [0.55, 0.5, 0.65], shadowAmt: 0.3 },
+  green_400: { temp: -0.08, tint: 0.14, contrast: 1.06, curve: 0.2, saturation: 0.92, fade: 0.04, shadow: [0.1, 0.35, 0.25], shadowAmt: 0.55, high: [0.95, 1, 0.88], highAmt: 0.2, grain: 0.04 },
+  instant_600: { exposure: 0.05, contrast: 0.88, saturation: 0.82, temp: 0.18, fade: 0.12, shadow: [0.15, 0.35, 0.4], shadowAmt: 0.4, high: [1, 0.93, 0.75], highAmt: 0.35, vignette: 0.45, grain: 0.03 },
+  night_neon: { exposure: -0.05, contrast: 1.2, curve: 0.35, saturation: 1.35, temp: -0.15, shadow: [0.25, 0.05, 0.55], shadowAmt: 0.7, high: [0.2, 0.95, 1], highAmt: 0.4, vignette: 0.4, glow: 0.25 },
   faded_film: { contrast: 0.94, curve: 0.15, saturation: 0.72, temp: 0.14, fade: 0.12, shadow: [0.22, 0.32, 0.38], shadowAmt: 0.5, high: [1, 0.94, 0.78], highAmt: 0.35, vignette: 0.25, grain: 0.06 },
 }
 

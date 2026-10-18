@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from . import events, media
+from . import events, media, watermark
 from .auth import current_user
 from .security import sign
 
@@ -55,7 +55,7 @@ def create_router() -> APIRouter:
                       (SELECT COUNT(*) FROM photos WHERE event_id = ?) AS photos_count""",
             event_id, event_id,
         )
-        photos = media.list_photos(db, event_id, sort=sort, limit=max(1, min(limit, 500)))
+        photos = media.list_photos(db, event_id, sort=sort, limit=max(1, min(limit, 500)), wm=watermark.wm_hash(event))
         return {
             "event": events.guest_view(event, settings.public_base_url, counts["guests_count"]),
             "guests_count": counts["guests_count"],

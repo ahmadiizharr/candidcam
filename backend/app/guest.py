@@ -2,6 +2,7 @@
 the browser; there are no accounts on this side."""
 
 import io
+import re
 import secrets
 from typing import Annotated
 
@@ -10,9 +11,13 @@ from fastapi.responses import FileResponse, Response
 import segno
 from pydantic import BaseModel, Field
 
-from . import events, media
+from . import events, media, watermark
+from .auth import current_user
 from .db import iso, now
 from .security import new_token, token_digest
+
+
+INNER = re.compile(r"^(0|1|0?\.\d+)(,(0|1|0?\.\d+)){3}$")
 
 
 class JoinIn(BaseModel):
@@ -111,6 +116,7 @@ def create_router() -> APIRouter:
         photo: UploadFile = File(...),
         filter: str = Form("none"),
         source: str = Form("camera"),
+        inner: str | None = Form(None),
     ):
         db, settings = request.app.state.db, request.app.state.settings
         event = event_by_slug(request, slug)
@@ -143,15 +149,15 @@ def create_router() -> APIRouter:
                     raise HTTPException(409, "Roll film kamu sudah habis")
                 stamp = iso(now())
                 c.execute(
-                    """INSERT INTO photos (id, event_id, guest_id, filter, source, width, height, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (photo_id, event["id"], guest["id"], filter, source, width, height, stamp),
+                    """INSERT INTO photos (id, event_id, guest_id, filter, source, width, height, inner, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (photo_id, event["id"], guest["id"], filter, source, width, height, inner if INNER.match(inner or "") else None, stamp),
                 )
                 c.execute("UPDATE events SET first_photo_at = COALESCE(first_photo_at, ?) WHERE id = ?", (stamp, event["id"]))
         except BaseException:
             media.remove_photo_files(folder, photo_id)
             raise
-        rows = media.list_photos(db, event["id"], guest_id=guest["id"], viewer_id=guest["id"], limit=1)
+        rows = media.list_photos(db, event["id"], guest_id=guest["id"], viewer_id=guest["id"], limit=1, wm=watermark.wm_hash(event))
         return {"photo": rows[0], "guest": guest_view(request, event, guest)}
 
     @r.get("/photos")
@@ -161,9 +167,9 @@ def create_router() -> APIRouter:
         if scope == "all":
             if not event["guest_can_see_others"]:
                 raise HTTPException(403, "Host tidak membuka galeri bersama")
-            photos = media.list_photos(request.app.state.db, event["id"], sort=sort, viewer_id=guest["id"])
+            photos = media.list_photos(request.app.state.db, event["id"], sort=sort, viewer_id=guest["id"], wm=watermark.wm_hash(event))
         else:
-            photos = media.list_photos(request.app.state.db, event["id"], sort=sort, guest_id=guest["id"], viewer_id=guest["id"])
+            photos = media.list_photos(request.app.state.db, event["id"], sort=sort, guest_id=guest["id"], viewer_id=guest["id"], wm=watermark.wm_hash(event))
         return {"photos": photos}
 
     @r.post("/photos/{photo_id}/like")
@@ -189,13 +195,23 @@ def create_router() -> APIRouter:
         return {"liked": liked, "likes_count": count}
 
     @r.get("/photos/{photo_id}/download")
-    def download(slug: str, photo_id: str, request: Request):
+    def download(slug: str, photo_id: str, request: Request, clean: bool = False):
         # Photo ids are unguessable; whoever has one may already load the image itself.
         event = event_by_slug(request, slug)
-        row = request.app.state.db.one("SELECT id FROM photos WHERE id = ? AND event_id = ?", photo_id, event["id"])
-        if row is None:
+        state = request.app.state
+        photo = state.db.one("SELECT * FROM photos WHERE id = ? AND event_id = ?", photo_id, event["id"])
+        if photo is None:
             raise HTTPException(404, "Foto tidak ditemukan")
-        path = request.app.state.settings.media_dir / event["id"] / f"{photo_id}.jpg"
-        return FileResponse(path, media_type="image/jpeg", filename=f"{event['slug']}-{photo_id[:6]}.jpg")
+        folder = state.settings.media_dir / event["id"]
+        name = f"{event['slug']}-{photo_id[:6]}"
+        if not event["wm_enabled"]:
+            return FileResponse(folder / f"{photo_id}.jpg", media_type="image/jpeg", filename=f"{name}.jpg")
+        if clean:
+            user = current_user(request)
+            if not event["allow_clean_download"] and not (user and user["id"] == event["user_id"]):
+                raise HTTPException(403, "Penyelenggara tidak mengizinkan unduhan tanpa watermark")
+            return FileResponse(folder / f"{photo_id}.jpg", media_type="image/jpeg", filename=f"{name}-asli.jpg", headers={"Cache-Control": "private, no-store"})
+        path = watermark.ensure(folder, photo, event, state.catalog, state.settings.fonts_dir)
+        return FileResponse(path, media_type="image/jpeg", filename=f"{name}.jpg")
 
     return r

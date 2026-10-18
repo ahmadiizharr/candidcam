@@ -259,3 +259,177 @@
   text-transform: uppercase;
   color: var(--g-faint);
 }
+
+/* ======================================================================
+   Additional home themes. Each one uses --g-accent, which the host can
+   override with their own colour (set inline on .gtheme).
+   ====================================================================== */
+.gtheme { --g-on-accent: #fff; }
+.gh-hero img { display: block; }
+
+/* ---------- Ivory Arch ---------- */
+.theme-ivory {
+  --g-bg: #f6f1e8;
+  --g-ink: #2b2620;
+  --g-muted: rgba(43, 38, 32, 0.62);
+  --g-faint: rgba(43, 38, 32, 0.38);
+  --g-line: rgba(43, 38, 32, 0.16);
+  --g-field: #fffdf8;
+  --g-accent: #a8834f;
+  --g-btn: var(--g-accent);
+  --g-btn-ink: var(--g-on-accent);
+  --g-card: #fffdf8;
+}
+.gh-ivory { padding: 30px 26px 4px; text-align: center; }
+.gh-mono { margin: 0 0 14px; font: italic 500 30px/1 'Cormorant Garamond', Georgia, serif; color: var(--g-accent); letter-spacing: 0.04em; }
+.gh-arch {
+  position: relative;
+  width: min(74%, 300px);
+  margin: 0 auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 999px 999px 4px 4px;
+  overflow: hidden;
+  background: #e9e1d2;
+  box-shadow: 0 0 0 7px var(--g-bg), 0 0 0 8px var(--g-accent);
+}
+.gh-arch img { width: 100%; height: 100%; object-fit: cover; }
+.gh-ivory .gh-title { margin: 30px 0 0; font: 500 clamp(32px, 10cqi, 44px) / 1.05 'Cormorant Garamond', Georgia, serif; letter-spacing: -0.01em; text-wrap: balance; }
+.gh-rule { display: flex; align-items: center; gap: 10px; width: 120px; margin: 14px auto 0; color: var(--g-accent); }
+.gh-rule::before, .gh-rule::after { content: ''; flex: 1; height: 1px; background: currentColor; }
+.gh-rule i { width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); }
+.gh-ivory .gh-count { margin-top: 12px; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; }
+
+/* ---------- Contact Sheet ---------- */
+.theme-contact_sheet {
+  --g-bg: #1b1b1a;
+  --g-ink: #ece8e1;
+  --g-muted: rgba(236, 232, 225, 0.6);
+  --g-faint: rgba(236, 232, 225, 0.35);
+  --g-line: rgba(236, 232, 225, 0.12);
+  --g-field: rgba(255, 255, 255, 0.05);
+  --g-accent: #e2412f;
+  --g-btn: #ece8e1;
+  --g-btn-ink: #1b1b1a;
+  --g-card: #232322;
+}
+.gh-sheet { padding: 22px 18px 4px; }
+.gh-sheet-label { display: flex; justify-content: space-between; margin: 0 4px 10px; font: 400 11px 'Special Elite', monospace; letter-spacing: 0.12em; color: var(--g-muted); text-transform: uppercase; }
+.gh-sheet-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px 6px 18px; background: #0d0d0c; }
+.gh-sheet-thumb { position: relative; aspect-ratio: 1; overflow: visible; }
+.gh-sheet-thumb img, .gh-sheet-thumb .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; object-position: var(--o) 40%; filter: grayscale(0.35) contrast(1.05); }
+.gh-sheet-thumb em { position: absolute; left: 0; bottom: -15px; font: 600 9px var(--g-mono); font-style: normal; color: #d98a3a; }
+.gh-sheet-pick { position: relative; margin: 16px 10px 0; aspect-ratio: 4 / 3.3; }
+.gh-sheet-pick img, .gh-sheet-pick .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-grease { position: absolute; inset: -14px -12px; width: calc(100% + 24px); height: calc(100% + 28px); fill: none; stroke: var(--g-accent); stroke-width: 4; stroke-linecap: round; opacity: 0.92; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4)); pointer-events: none; }
+.gh-sheet-num { position: absolute; right: -2px; top: -26px; font: 400 18px 'Special Elite', monospace; font-style: normal; color: var(--g-accent); transform: rotate(-6deg); }
+.gh-sheet .gh-title { margin: 30px 8px 0; font: 400 clamp(38px, 13cqi, 56px) / 0.92 'Bebas Neue', Impact, sans-serif; letter-spacing: 0.01em; text-transform: uppercase; }
+.gh-sheet .gh-count { margin: 10px 8px 0; font-family: 'Special Elite', monospace; font-size: 12.5px; }
+
+/* ---------- Riso Zine ---------- */
+.theme-riso {
+  --g-bg: #f4efe4;
+  --g-ink: #1d1d1b;
+  --g-muted: rgba(29, 29, 27, 0.66);
+  --g-faint: rgba(29, 29, 27, 0.4);
+  --g-line: rgba(29, 29, 27, 0.22);
+  --g-field: #fffaf0;
+  --g-accent: #ff4f8b;
+  --g-ink2: #2c5fd0;
+  --g-btn: var(--g-accent);
+  --g-btn-ink: var(--g-on-accent);
+  --g-card: #fffaf0;
+  background-image: radial-gradient(rgba(29, 29, 27, 0.07) 1px, transparent 1.2px);
+  background-size: 6px 6px;
+}
+.gh-riso { position: relative; padding: 26px 22px 4px; }
+.gh-riso-stamp { position: absolute; z-index: 2; top: 18px; right: 18px; padding: 6px 10px; border: 2px solid var(--g-ink2); color: var(--g-ink2); font: 400 15px/1 'Bebas Neue', Impact, sans-serif; letter-spacing: 0.08em; transform: rotate(6deg); background: var(--g-bg); }
+.gh-riso-print { position: relative; aspect-ratio: 4 / 4.6; overflow: hidden; background: var(--g-accent); }
+.gh-riso-print img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.35) brightness(1.05); mix-blend-mode: multiply; }
+.gh-riso-print .ink-b { opacity: 0.55; transform: translate(4px, 3px); mix-blend-mode: screen; filter: grayscale(1) contrast(1.6) invert(1); }
+.gh-riso-print::after { content: ''; position: absolute; inset: 0; background: var(--g-ink2); mix-blend-mode: lighten; opacity: 0.35; }
+.gh-riso .gh-title { position: relative; margin: 18px 0 0; font: 400 clamp(46px, 15cqi, 64px) / 0.9 'Bebas Neue', Impact, sans-serif; text-transform: uppercase; color: var(--g-ink); text-shadow: 3px 3px 0 var(--g-accent); text-wrap: balance; }
+.gh-riso .gh-count { margin-top: 10px; font: 600 12px var(--g-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.theme-riso .g-btn { border: 2px solid var(--g-ink); box-shadow: 4px 4px 0 var(--g-ink2); border-radius: 6px; }
+.theme-riso .g-field { border-radius: 6px; border: 2px solid var(--g-ink); }
+.theme-riso .g-btn-ghost { background: transparent; color: var(--g-ink); }
+
+/* ---------- Ticket Stub ---------- */
+.theme-ticket {
+  --g-bg: #16213d;
+  --g-ink: #f7f1e3;
+  --g-muted: rgba(247, 241, 227, 0.66);
+  --g-faint: rgba(247, 241, 227, 0.38);
+  --g-line: rgba(247, 241, 227, 0.14);
+  --g-field: rgba(255, 255, 255, 0.06);
+  --g-accent: #f2c14e;
+  --g-on-accent: #16213d;
+  --g-btn: var(--g-accent);
+  --g-btn-ink: var(--g-on-accent);
+  --g-card: #1d2a4b;
+}
+.gh-ticket { padding: 26px 20px 4px; }
+.gh-ticket-card { position: relative; background: #f7f1e3; color: #16213d; border-radius: 14px; overflow: hidden; box-shadow: 0 24px 40px -22px rgba(0, 0, 0, 0.7); }
+.gh-ticket-img { aspect-ratio: 4 / 3.4; overflow: hidden; }
+.gh-ticket-img img, .gh-ticket-img .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-ticket-img .gh-cover-empty { position: static; display: grid; background: #e6dcc4; color: #b5a47c; }
+.gh-ticket-perf {
+  position: relative;
+  height: 22px;
+  background: radial-gradient(circle at 0 50%, var(--g-bg) 11px, transparent 11.5px) left / 22px 22px no-repeat,
+    radial-gradient(circle at 100% 50%, var(--g-bg) 11px, transparent 11.5px) right / 22px 22px no-repeat;
+}
+.gh-ticket-perf::after { content: ''; position: absolute; left: 18px; right: 18px; top: 50%; border-top: 2px dashed rgba(22, 33, 61, 0.28); }
+.gh-ticket-stub { position: relative; padding: 4px 22px 20px; text-align: center; }
+.gh-ticket-admit { margin: 0; font: 400 15px 'Bebas Neue', Impact, sans-serif; letter-spacing: 0.32em; color: var(--g-accent); filter: brightness(0.82); }
+.gh-ticket .gh-title { margin: 6px 0 0; font: italic 500 clamp(26px, 8.6cqi, 34px) / 1.08 'Playfair Display', Georgia, serif; text-wrap: balance; }
+.gh-ticket-meta { display: flex; justify-content: space-between; gap: 10px; margin: 14px 0 0; font: 600 11px var(--g-mono); letter-spacing: 0.06em; color: rgba(22, 33, 61, 0.62); text-transform: uppercase; }
+.gh-barcode { display: block; height: 26px; margin-top: 12px; background: repeating-linear-gradient(90deg, #16213d 0 2px, transparent 2px 4px, #16213d 4px 5px, transparent 5px 8px, #16213d 8px 11px, transparent 11px 12px); opacity: 0.85; }
+
+/* ---------- Neon Night ---------- */
+.theme-neon {
+  --g-bg: #0c0718;
+  --g-ink: #f3eefe;
+  --g-muted: rgba(243, 238, 254, 0.62);
+  --g-faint: rgba(243, 238, 254, 0.35);
+  --g-line: rgba(243, 238, 254, 0.14);
+  --g-field: rgba(255, 255, 255, 0.05);
+  --g-accent: #3df5ff;
+  --g-btn: transparent;
+  --g-btn-ink: var(--g-accent);
+  --g-card: #160e2a;
+  background-image: radial-gradient(120% 60% at 50% 0%, rgba(255, 63, 164, 0.16), transparent 60%), radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: auto, 22px 22px;
+}
+.gh-neon { padding: 30px 24px 4px; text-align: center; }
+.gh-neon-frame { aspect-ratio: 4 / 4.4; border-radius: 22px; overflow: hidden; border: 2px solid var(--g-accent); box-shadow: 0 0 18px -2px var(--g-accent), inset 0 0 18px -6px var(--g-accent), 0 0 60px -20px #ff3fa4; }
+.gh-neon-frame img, .gh-neon-frame .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-neon-frame .gh-cover-empty { position: static; display: grid; }
+.gh-neon .gh-title { margin: 26px 0 0; font: 600 clamp(38px, 12cqi, 52px) / 1.05 'Dancing Script', cursive; color: #fff; text-shadow: 0 0 6px var(--g-accent), 0 0 18px var(--g-accent), 0 0 42px var(--g-accent); text-wrap: balance; animation: neon-flicker 6s infinite; }
+@keyframes neon-flicker { 0%, 92%, 96%, 100% { opacity: 1; } 94% { opacity: 0.55; } }
+.gh-neon-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ff3fa4; box-shadow: 0 0 10px #ff3fa4; }
+.theme-neon .g-btn { border: 1.5px solid var(--g-accent); box-shadow: 0 0 16px -4px var(--g-accent), inset 0 0 12px -6px var(--g-accent); text-shadow: 0 0 8px var(--g-accent); }
+.theme-neon .g-btn-ghost { border-color: var(--g-line); box-shadow: none; text-shadow: none; color: var(--g-ink); }
+
+/* ---------- Garden Party ---------- */
+.theme-garden {
+  --g-bg: #e7ecdf;
+  --g-ink: #2d3a29;
+  --g-muted: rgba(45, 58, 41, 0.64);
+  --g-faint: rgba(45, 58, 41, 0.4);
+  --g-line: rgba(45, 58, 41, 0.18);
+  --g-field: #f6f8f1;
+  --g-accent: #56744a;
+  --g-btn: var(--g-accent);
+  --g-btn-ink: var(--g-on-accent);
+  --g-card: #f3f6ec;
+}
+.gh-garden { padding: 30px 20px 4px; text-align: center; }
+.gh-oval-wrap { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+.gh-oval { width: min(66%, 270px); aspect-ratio: 3 / 4; border-radius: 50%; overflow: hidden; background: #d5ddc8; box-shadow: 0 0 0 6px var(--g-bg), 0 0 0 7px var(--g-accent); }
+.gh-oval img, .gh-oval .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-oval .gh-cover-empty { position: static; display: grid; }
+.gh-sprig { position: absolute; bottom: -6px; width: 54px; color: var(--g-accent); }
+.gh-sprig.l { left: calc(17% - 30px); transform: rotate(-24deg); }
+.gh-sprig.r { right: calc(17% - 30px); transform: scaleX(-1) rotate(-24deg); }
+.gh-garden .gh-title { margin: 26px 0 0; font: italic 500 clamp(34px, 11cqi, 46px) / 1.04 'Cormorant Garamond', Georgia, serif; text-wrap: balance; }
+.gh-garden .gh-count { margin-top: 10px; }

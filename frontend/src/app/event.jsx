@@ -6,8 +6,8 @@ import { Lightbox } from '../ui/Lightbox.jsx'
 import { confirmDialog, copyText, Spinner, toast, toastError } from '../ui/ui.jsx'
 import { StatusChip } from './events.jsx'
 import { Link, navigate } from './router.jsx'
-import { draftBody, StepCover, StepFilters, StepFrame, StepName, StepRatio, StepSchedule, StepSettings, STEPS, stepProblem } from './steps.jsx'
-import { uploadCover } from './wizard.jsx'
+import { DISPLAY_STEP, draftBody, StepCover, StepDisplay, StepFilters, StepFrame, StepName, StepRatio, StepSchedule, StepSettings, STEPS, StepTheme, StepWatermark, stepProblem } from './steps.jsx'
+import { uploadCover, uploadLogo } from './wizard.jsx'
 import { WizardPreview } from './preview.jsx'
 
 const TABS = [
@@ -181,7 +181,8 @@ function Photos({ ev, reload }) {
           {ev.enable_likes && <option value="most_liked">Like terbanyak</option>}
         </select>
         <span class="grow" />
-        {ev.photos_count > 0 && <a class="btn btn-sm btn-primary" href={`/api/events/${ev.id}/photos.zip`}><Icon name="download" size={15} /> Download semua (ZIP)</a>}
+        {ev.photos_count > 0 && ev.wm_enabled && <a class="btn btn-sm" href={`/api/events/${ev.id}/photos.zip?watermark=1`}><Icon name="download" size={15} /> ZIP ber-watermark</a>}
+        {ev.photos_count > 0 && <a class="btn btn-sm btn-primary" href={`/api/events/${ev.id}/photos.zip`}><Icon name="download" size={15} /> {ev.wm_enabled ? 'ZIP foto asli' : 'Download semua (ZIP)'}</a>}
       </div>
       {photos.length === 0 ? (
         <div class="empty-small card">
@@ -211,7 +212,8 @@ function Photos({ ev, reload }) {
                 <span>{timeAgo(p.created_at)} · {p.source === 'gallery' ? 'dari galeri' : 'kamera'}{ev.enable_likes ? ` · ${p.likes_count} like` : ''}</span>
               </div>
               <button class="lb-action icon danger" onClick={() => remove(p)} aria-label="Hapus"><Icon name="trash" size={18} /></button>
-              <a class="lb-action primary" href={`/api/g/${ev.slug}/photos/${p.id}/download`} download><Icon name="download" size={18} /> Unduh</a>
+              {ev.wm_enabled && <a class="lb-action" href={`/api/events/${ev.id}/photos/${p.id}/download`} download>WM</a>}
+              <a class="lb-action primary" href={`/api/events/${ev.id}/photos/${p.id}/download?clean=1`} download><Icon name="download" size={18} /> {ev.wm_enabled ? 'Asli' : 'Unduh'}</a>
             </>
           )}
         />
@@ -250,10 +252,13 @@ function Guests({ ev }) {
 // ---------------------------------------------------------------- settings
 const SECTIONS = [
   ['name', StepName],
+  ['theme', StepTheme],
   ['cover', StepCover],
+  ['display', StepDisplay],
   ['ratio', StepRatio],
   ['filters', StepFilters],
   ['frame', StepFrame],
+  ['watermark', StepWatermark],
   ['settings', StepSettings],
   ['schedule', StepSchedule],
 ]
@@ -262,6 +267,10 @@ function toDraft(ev) {
   return {
     ...ev,
     couple_names: ev.couple_names || '',
+    wm_text: ev.wm_text || '',
+    wmLogoPreview: ev.wm_image_url,
+    wmLogoFile: null,
+    wmLogoRemoved: false,
     frame_caption: ev.frame_caption || '',
     frame_date: ev.frame_date || '',
     frame_hashtag: ev.frame_hashtag || '',
@@ -272,7 +281,7 @@ function toDraft(ev) {
   }
 }
 
-const EDITABLE = ['name', 'couple_names', 'slug', 'language', 'theme', 'aspect_ratio', 'filters', 'frame_style', 'frame_paper', 'frame_caption', 'frame_date', 'frame_hashtag', 'frame_font', 'frame_text_color', 'frame_date_format', 'participant_limit', 'max_photos_per_guest', 'allow_gallery_upload', 'guest_can_see_others', 'enable_likes', 'starts_at', 'ends_at']
+const EDITABLE = ['accent_color', 'display_layout', 'display_palette', 'wm_enabled', 'wm_mode', 'wm_text', 'wm_show_date', 'wm_font', 'wm_color', 'wm_opacity', 'wm_size', 'wm_pos_portrait', 'wm_pos_landscape', 'allow_clean_download', 'name', 'couple_names', 'slug', 'language', 'theme', 'aspect_ratio', 'filters', 'frame_style', 'frame_paper', 'frame_caption', 'frame_date', 'frame_hashtag', 'frame_font', 'frame_text_color', 'frame_date_format', 'participant_limit', 'max_photos_per_guest', 'allow_gallery_upload', 'guest_can_see_others', 'enable_likes', 'starts_at', 'ends_at']
 
 function Settings({ ev, setEv, catalog }) {
   const [draft, setDraft] = useState(() => toDraft(ev))
@@ -281,7 +290,7 @@ function Settings({ ev, setEv, catalog }) {
   const [active, setActive] = useState('name')
   const set = useCallback((patch) => setDraft((d) => ({ ...d, ...patch })), [])
   const base = useMemo(() => toDraft(ev), [ev])
-  const dirty = EDITABLE.some((k) => JSON.stringify(draft[k] ?? null) !== JSON.stringify(base[k] ?? null)) || draft.coverFile || draft.coverRemoved
+  const dirty = EDITABLE.some((k) => JSON.stringify(draft[k] ?? null) !== JSON.stringify(base[k] ?? null)) || draft.coverFile || draft.coverRemoved || draft.wmLogoFile || draft.wmLogoRemoved
 
   const save = async () => {
     for (const [id] of SECTIONS) {
@@ -295,6 +304,8 @@ function Settings({ ev, setEv, catalog }) {
       let next = await api(`/api/events/${ev.id}`, { method: 'PATCH', body: patch })
       if (draft.coverFile) next = await uploadCover(ev.id, draft.coverFile)
       else if (draft.coverRemoved && ev.cover_url) next = await api(`/api/events/${ev.id}/cover`, { method: 'DELETE' })
+      if (draft.wmLogoFile) next = await uploadLogo(ev.id, draft.wmLogoFile)
+      else if (draft.wmLogoRemoved && ev.wm_image_url) next = await api(`/api/events/${ev.id}/watermark`, { method: 'DELETE' })
       setEv(next)
       setDraft(toDraft(next))
       toast('Perubahan disimpan')
@@ -320,7 +331,7 @@ function Settings({ ev, setEv, catalog }) {
     <div class="settings">
       <div class="settings-main">
         {SECTIONS.map(([id, Body]) => {
-          const s = STEPS.find((x) => x.id === id)
+          const s = STEPS.find((x) => x.id === id) || DISPLAY_STEP
           return (
             <section key={id} class="card set-section" onFocusIn={() => setActive(id)} onPointerDown={() => setActive(id)}>
               <header>
@@ -341,7 +352,7 @@ function Settings({ ev, setEv, catalog }) {
         </section>
       </div>
       <aside class="settings-preview">
-        <WizardPreview stepId={active} draft={draft} catalog={catalog} focusFilter={focus} />
+        <WizardPreview stepId={active} draft={draft} catalog={catalog} focusFilter={focus} eventId={ev.id} />
       </aside>
       <div class={`savebar ${dirty ? 'show' : ''}`}>
         <span>Ada perubahan yang belum disimpan</span>
