@@ -23,6 +23,50 @@
       }
     },
     {
+      "id": "noir_gold",
+      "name": "Art Deco Gold",
+      "color": "#0d0c0a",
+      "accent": "#d4af6a",
+      "dark": true,
+      "blurb": {
+        "id": "Hitam pekat, bingkai emas art deco",
+        "en": "Jet black, art deco gold frame"
+      }
+    },
+    {
+      "id": "velvet",
+      "name": "Velvet Night",
+      "color": "#2a0b14",
+      "accent": "#e8c9a0",
+      "dark": true,
+      "blurb": {
+        "id": "Beludru merah anggur, kilau sampanye",
+        "en": "Burgundy velvet, champagne glow"
+      }
+    },
+    {
+      "id": "marquee",
+      "name": "Cinema Marquee",
+      "color": "#100c0a",
+      "accent": "#ffcf6b",
+      "dark": true,
+      "blurb": {
+        "id": "Papan bioskop berlampu bohlam",
+        "en": "Theatre sign ringed with bulbs"
+      }
+    },
+    {
+      "id": "moonlight",
+      "name": "Moonlight",
+      "color": "#0a1226",
+      "accent": "#cfd8ff",
+      "dark": true,
+      "blurb": {
+        "id": "Langit malam, sampul bulan purnama",
+        "en": "Night sky, full-moon cover"
+      }
+    },
+    {
       "id": "scrapbook",
       "name": "Scrapbook",
       "color": "#f3e9d6",
@@ -455,6 +499,17 @@
   },
   "display_layouts": [
     {
+      "id": "filmstrip",
+      "name": {
+        "id": "Strip Film",
+        "en": "Film Strip"
+      },
+      "blurb": {
+        "id": "Sampul di atas strip film, QR di samping, foto dalam kolom.",
+        "en": "Cover on a film strip, QR alongside, photos in columns."
+      }
+    },
+    {
       "id": "mosaic",
       "name": {
         "id": "Dinding Mosaik",
@@ -463,6 +518,17 @@
       "blurb": {
         "id": "Semua foto dalam kolom rapat, kartu karcis di pojok.",
         "en": "Every photo in tight columns, ticket card in the corner."
+      }
+    },
+    {
+      "id": "pinboard",
+      "name": {
+        "id": "Papan Pin",
+        "en": "Pinboard"
+      },
+      "blurb": {
+        "id": "Kartu foto padat dengan nama di bawahnya, terus bergulir.",
+        "en": "Dense photo cards with names underneath, always scrolling."
       }
     },
     {
@@ -477,6 +543,17 @@
       }
     },
     {
+      "id": "clothesline",
+      "name": {
+        "id": "Jemuran Polaroid",
+        "en": "Polaroid Clothesline"
+      },
+      "blurb": {
+        "id": "Puluhan polaroid tergantung di tali, bergoyang pelan.",
+        "en": "Dozens of polaroids pegged on strings, gently swaying."
+      }
+    },
+    {
       "id": "cinema",
       "name": {
         "id": "Layar Bioskop",
@@ -485,6 +562,17 @@
       "blurb": {
         "id": "Satu foto besar bergantian, pita film berjalan di bawah.",
         "en": "One big rotating photo, a film strip running below."
+      }
+    },
+    {
+      "id": "streaming",
+      "name": {
+        "id": "Streaming",
+        "en": "Streaming"
+      },
+      "blurb": {
+        "id": "Banner besar dan baris-baris foto bergulir ala aplikasi film.",
+        "en": "A big banner and rows of rolling photos, like a film app."
       }
     }
   ],

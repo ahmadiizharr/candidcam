@@ -85,7 +85,7 @@ def defaults(catalog: dict) -> dict:
         "starts_at": None,
         "ends_at": None,
         "accent_color": None,
-        "display_layout": "mosaic",
+        "display_layout": "filmstrip",
         "display_palette": "midnight",
         "wm_enabled": False,
         "wm_mode": "text",

@@ -69,7 +69,7 @@ export function newDraft(catalog) {
     starts_at: null,
     ends_at: null,
     accent_color: null,
-    display_layout: 'mosaic',
+    display_layout: 'filmstrip',
     display_palette: 'midnight',
     wm_enabled: false,
     wm_mode: 'text',

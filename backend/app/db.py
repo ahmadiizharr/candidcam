@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS events (
     ends_at TEXT,
     display_passcode TEXT NOT NULL,
     accent_color TEXT,
-    display_layout TEXT NOT NULL DEFAULT 'mosaic',
+    display_layout TEXT NOT NULL DEFAULT 'filmstrip',
     display_palette TEXT NOT NULL DEFAULT 'midnight',
     wm_enabled INTEGER NOT NULL DEFAULT 0,
     wm_mode TEXT NOT NULL DEFAULT 'text',
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS likes (
 ADDED_COLUMNS = [
     ("events", "couple_names", "TEXT"),
     ("events", "accent_color", "TEXT"),
-    ("events", "display_layout", "TEXT NOT NULL DEFAULT 'mosaic'"),
+    ("events", "display_layout", "TEXT NOT NULL DEFAULT 'filmstrip'"),
     ("events", "display_palette", "TEXT NOT NULL DEFAULT 'midnight'"),
     ("events", "wm_enabled", "INTEGER NOT NULL DEFAULT 0"),
     ("events", "wm_mode", "TEXT NOT NULL DEFAULT 'text'"),

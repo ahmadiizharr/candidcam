@@ -87,9 +87,9 @@ function Unlock({ onUnlocked, lang }) {
 }
 
 /** Admission ticket with the QR: title, date, head count. Same card in every layout. */
-function Ticket({ ev, data, t }) {
+function Ticket({ ev, data, t, bar }) {
   return (
-    <aside class="ticket">
+    <aside class={`ticket ${bar ? 'ticket-bar' : ''}`}>
       <span class="ticket-tape" aria-hidden="true" />
       <div class="ticket-main">
         <p class="ticket-kicker"><i /> LIVE · Candid Cam</p>
@@ -139,7 +139,7 @@ function Settings({ prefs, setPrefs, ev, catalog, t, onClose }) {
         </div>
         {(prefs.layout || prefs.palette) && <button class="pop-item" onClick={() => setPrefs({ ...prefs, layout: null, palette: null })}>{t.eventDefault}</button>}
         <div class="pop-sep" />
-        {layout === 'mosaic' && (
+        {['mosaic', 'filmstrip', 'pinboard'].includes(layout) && (
           <>
             <p class="pop-label">{t.sortBy}</p>
             {sorts.map(([v, label]) => (
@@ -152,13 +152,13 @@ function Settings({ prefs, setPrefs, ev, catalog, t, onClose }) {
         )}
         {ev.enable_likes && <label class="pop-row">{t.showLikeCounts}<Switch checked={prefs.likes} onChange={set('likes')} label={t.showLikeCounts} /></label>}
         <label class="pop-row">{t.spotlight}<Switch checked={prefs.spotlight} onChange={set('spotlight')} label={t.spotlight} /></label>
-        {layout === 'mosaic' && <label class="pop-row">{t.autoScroll}<Switch checked={prefs.scroll} onChange={set('scroll')} label={t.autoScroll} /></label>}
-        {layout === 'mosaic' && prefs.scroll && (
+        {['mosaic', 'filmstrip'].includes(layout) && <label class="pop-row">{t.autoScroll}<Switch checked={prefs.scroll} onChange={set('scroll')} label={t.autoScroll} /></label>}
+        {(['mosaic', 'filmstrip'].includes(layout) && prefs.scroll) || layout === 'pinboard' ? (
           <label class="pop-row">
             {t.scrollSpeed}
             <input type="number" min={5} step={5} value={prefs.speed} onInput={(e) => set('speed')(Math.max(5, +e.currentTarget.value || 5))} />
           </label>
-        )}
+        ) : null}
       </div>
     </>
   )
@@ -288,6 +288,242 @@ function Cinema({ photos, showLikes, onOpen, t }) {
   )
 }
 
+/** Keeps `count` photos on screen: new arrivals take the slot shown longest, and a quiet
+ *  screen slowly cycles the rest of the album through. */
+function useSlots(photos, count, every = 6500) {
+  const [slots, setSlots] = useState([])
+  const seen = useRef(new Set())
+  const cursor = useRef(0)
+  const byId = useMemo(() => new Map(photos.map((p) => [p.id, p])), [photos])
+  useEffect(() => {
+    setSlots((prev) => {
+      let next = prev.filter((s) => byId.has(s.id) && s.slot < count)
+      const fresh = photos.filter((p) => !seen.current.has(p.id))
+      fresh.forEach((p) => seen.current.add(p.id))
+      for (const p of fresh.slice(0, count).reverse()) {
+        const free = Array.from({ length: count }, (_, i) => i).find((i) => !next.some((s) => s.slot === i))
+        if (free !== undefined) next = [...next, { id: p.id, slot: free, at: performance.now() + Math.random() }]
+        else {
+          const oldest = next.reduce((a, b) => (a.at < b.at ? a : b))
+          next = next.map((s) => (s === oldest ? { id: p.id, slot: s.slot, at: performance.now() + Math.random() } : s))
+        }
+      }
+      return next
+    })
+  }, [photos, count])
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSlots((prev) => {
+        if (prev.length < count) return prev
+        const shown = new Set(prev.map((s) => s.id))
+        const pool = photos.filter((p) => !shown.has(p.id))
+        if (!pool.length) return prev
+        const pick = pool[cursor.current++ % pool.length]
+        const oldest = prev.reduce((a, b) => (a.at < b.at ? a : b))
+        return prev.map((s) => (s === oldest ? { id: pick.id, slot: s.slot, at: performance.now() } : s))
+      })
+    }, every)
+    return () => clearInterval(id)
+  }, [photos, count])
+  return [slots, byId]
+}
+
+const FILM_EDGE = 'CANDID 400 ◂ 12 ◂ 12A ◂ 13 ◂ 13A ◂ 14 ◂ 14A ◂ 15 ◂ 15A ◂ 16 ◂ 16A ◂ 17 ◂ 17A ◂ 18 ◂ 18A ◂ 19 ◂ 19A ◂ 20'
+
+/** The original layout: cover on a strip of film with the QR beside it, photos in columns. */
+function Filmstrip({ ev, data, photos, fresh, showLikes, onOpen, wallRef, t }) {
+  const scrap = ev.theme === 'scrapbook'
+  return (
+    <div class={`fs ${scrap ? 'fs-scrap' : ''}`}>
+      <aside class="fs-side">
+        <div class="side-cover">
+          {ev.cover_url ? <img src={ev.cover_url} alt="" /> : <span class="side-cover-empty"><Icon name="camera" size={44} stroke={1.2} /></span>}
+          {scrap ? (
+            <>
+              <span class="side-tape l" />
+              <span class="side-tape r" />
+            </>
+          ) : (
+            <>
+              <span class="side-vignette" />
+              <span class="side-sprockets l"><span>{FILM_EDGE}</span></span>
+              <span class="side-sprockets r"><span>{FILM_EDGE}</span></span>
+              <span class="side-fade" />
+            </>
+          )}
+          <span class="side-pill"><i /> LIVE · Candid Cam</span>
+        </div>
+        <div class="side-body">
+          <h1 class="side-name">{ev.couple_names || ev.name}</h1>
+          {eventDate(ev) && <p class="side-date">{eventDate(ev)}</p>}
+          <p class="side-stats">
+            <span><Icon name="users" size={14} /> {data.guests_count}/{ev.participant_limit ?? '∞'} {t.participantsShort}</span>
+            <span class="dot" />
+            <span><Icon name="camera" size={14} /> {t.photosCount(data.photos_count)}</span>
+          </p>
+          <div class="side-qr">
+            <img src={`/api/g/${ev.slug}/qr.svg`} alt="QR" />
+            <span class="qr-logo" aria-hidden="true"><Icon name="camera" size={18} stroke={2} /><i /></span>
+          </div>
+          <p class="side-scan">{t.scanToJoin}</p>
+          <p class="side-url">{ev.public_url.replace(/^https?:\/\//, '')}</p>
+        </div>
+        <p class="side-brand"><span class="wm-dot" /> Candid<em>Cam</em></p>
+      </aside>
+      <div class="fs-wall" ref={wallRef}>
+        {photos.length === 0 ? (
+          <div class="empty-stage"><span class="empty-roll"><Icon name="film" size={40} stroke={1.2} /></span><p>{t.waitingForPhotos}</p></div>
+        ) : (
+          <div class="fs-grid">
+            {photos.map((p, i) => (
+              <button key={p.id} class={`fs-item ${fresh.has(p.id) ? 'is-new' : ''}`} onClick={() => onOpen(i)} style={{ aspectRatio: `${p.width} / ${p.height}`, '--r': `${((p.id.charCodeAt(0) + p.id.charCodeAt(1)) % 5) - 2}deg` }}>
+                <img src={p.thumb_url} srcSet={`${p.thumb_url} 720w, ${p.url} 2000w`} sizes="(min-width: 1600px) 25vw, 33vw" alt="" loading="lazy" />
+                <span class="fs-meta"><span>{p.guest_name}</span>{showLikes && <span><Icon name="heart" size={14} fill="currentColor" /> {p.likes_count}</span>}</span>
+                {fresh.has(p.id) && <span class="tile-new">{t.justIn}</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function hue(name) {
+  let h = 0
+  for (const ch of name || '') h = (h * 31 + ch.charCodeAt(0)) % 360
+  return h
+}
+
+/** Pinterest-like board: many narrow columns, the name under every picture. */
+function Pinboard({ photos, fresh, showLikes, onOpen, wallRef, t }) {
+  return (
+    <div class="wall" ref={wallRef}>
+      <div class="pins">
+        {photos.map((p, i) => (
+          <figure key={p.id} class={`pin ${fresh.has(p.id) ? 'is-new' : ''}`}>
+            <button class="pin-img" onClick={() => onOpen(i)} style={{ aspectRatio: `${p.width} / ${p.height}` }}>
+              <img src={p.thumb_url} alt="" loading="lazy" />
+              {fresh.has(p.id) && <span class="tile-new">{t.justIn}</span>}
+            </button>
+            <figcaption>
+              <span class="pin-av" style={{ '--h': hue(p.guest_name) }}>{(p.guest_name || '?').slice(0, 1).toUpperCase()}</span>
+              <span class="pin-name">{p.guest_name}</span>
+              {showLikes && <span class="likes"><Icon name="heart" size={13} fill="currentColor" /> {p.likes_count}</span>}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Polaroids pegged on sagging strings, several rows deep, gently swaying. */
+function Clothesline({ photos, showLikes, onOpen, landscape }) {
+  const rows = landscape ? 3 : 4
+  const per = landscape ? 7 : 3
+  const [slots, byId] = useSlots(photos, rows * per, 5000)
+  const sag = 5.5 // % of the row band
+  return (
+    <div class="line-stage" style={{ '--rows': rows, '--per': per }}>
+      <svg class="strings" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {Array.from({ length: rows }, (_, r) => {
+          const y = (r / rows) * 100 + 4
+          return <path key={r} d={`M -2 ${y} Q 50 ${y + sag * 2} 102 ${y}`} />
+        })}
+      </svg>
+      {slots.map((s) => {
+        const p = byId.get(s.id)
+        if (!p) return null
+        const r = Math.floor(s.slot / per)
+        const c = s.slot % per
+        const x = (c + 0.5) / per
+        const y = (r / rows) * 100 + 4 + sag * 4 * x * (1 - x)
+        return (
+          <button
+            key={`${s.slot}-${p.id}`}
+            class="hang"
+            onClick={() => onOpen(photos.indexOf(p))}
+            style={{ '--x': `${x * 100}%`, '--y': `${y}%`, '--d': `${(jitter(p.id, 4) * 3).toFixed(2)}s`, '--r0': `${(jitter(p.id, 5) - 0.5) * 6}deg`, '--ar': `${p.width} / ${p.height}`, '--hw': p.height / p.width }}
+          >
+            <span class="peg" aria-hidden="true" />
+            <span class="hang-img"><img src={p.thumb_url} alt="" /></span>
+            <span class="hang-cap">{p.guest_name}{showLikes && p.likes_count > 0 && <em> ♥ {p.likes_count}</em>}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Streaming-app look: a hero banner that rotates, rows of posters that roll by. */
+function Streaming({ ev, data, photos, showLikes, onOpen, t }) {
+  const heroes = useMemo(() => {
+    const liked = [...photos].sort((a, b) => b.likes_count - a.likes_count).slice(0, 4)
+    const seen = new Set()
+    return [...photos.slice(0, 4), ...liked].filter((p) => !seen.has(p.id) && seen.add(p.id))
+  }, [photos])
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    if (heroes.length < 2) return
+    const id = setInterval(() => setI((n) => (n + 1) % heroes.length), 8000)
+    return () => clearInterval(id)
+  }, [heroes.length])
+  const hero = heroes[Math.min(i, heroes.length - 1)]
+  const byGuest = useMemo(() => {
+    const m = new Map()
+    for (const p of photos) m.set(p.guest_name, [...(m.get(p.guest_name) || []), p])
+    return [...m.entries()].filter(([, ps]) => ps.length >= 2).sort((a, b) => b[1].length - a[1].length).slice(0, 2)
+  }, [photos])
+  const rows = [
+    [t.rowNewest, photos.slice(0, 18)],
+    ...(ev.enable_likes ? [[t.rowLoved, [...photos].sort((a, b) => b.likes_count - a.likes_count).slice(0, 18)]] : []),
+    ...byGuest.map(([name, ps]) => [t.rowFrom(name), ps]),
+  ].filter(([, ps]) => ps.length)
+  return (
+    <div class="stream">
+      {hero && (
+        <section class="hero" key={hero.id}>
+          <img class="hero-img" src={hero.url} alt="" />
+          <div class="hero-shade" />
+          <div class="hero-copy">
+            <p class="hero-kicker"><i /> {t.liveNow}</p>
+            <h1 class="hero-title">{ev.couple_names || ev.name}</h1>
+            <p class="hero-meta">
+              {eventDate(ev) && <span>{eventDate(ev)}</span>}
+              <span>{t.photosCount(data.photos_count)}</span>
+              <span>{data.guests_count} {t.participantsShort}</span>
+            </p>
+            <p class="hero-line">{t.by(hero.guest_name)}{showLikes ? ` · ♥ ${hero.likes_count}` : ''}</p>
+            <div class="hero-cta">
+              <span class="hero-qr"><img src={`/api/g/${ev.slug}/qr.svg`} alt="QR" /></span>
+              <span class="hero-scan"><strong>{t.scanToJoin}</strong><small>{ev.public_url.replace(/^https?:\/\//, '')}</small></span>
+            </div>
+          </div>
+          <div class="hero-dots">{heroes.map((h, k) => <i key={h.id} class={k === i ? 'on' : ''} />)}</div>
+        </section>
+      )}
+      <div class="rows">
+        {rows.map(([title, ps], r) => (
+          <section class="row" key={title}>
+            <h2>{title}</h2>
+            <div class="row-window">
+              <div class={`row-track ${ps.length > 6 ? 'roll' : ''}`} style={{ '--n': ps.length, '--dir': r % 2 ? 'reverse' : 'normal' }}>
+                {(ps.length > 6 ? [...ps, ...ps] : ps).map((p, k) => (
+                  <button key={`${p.id}-${k}`} class="poster" onClick={() => onOpen(photos.indexOf(p))}>
+                    <img src={p.thumb_url} alt="" loading="lazy" />
+                    <span>{p.guest_name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------- page
 function Wall() {
   const [token, setToken] = useState(() => store.get(TOKEN, null))
@@ -318,8 +554,9 @@ function Wall() {
     return () => removeEventListener('resize', on)
   }, [])
 
-  const layoutNow = prefs.layout || data?.event.display_layout || 'mosaic'
-  const sort = layoutNow === 'mosaic' ? prefs.sort : 'newest'
+  const layoutNow = prefs.layout || data?.event.display_layout || 'filmstrip'
+  const columns = ['mosaic', 'filmstrip', 'pinboard'].includes(layoutNow)
+  const sort = columns ? prefs.sort : 'newest'
 
   useEffect(() => {
     let alive = true
@@ -370,7 +607,7 @@ function Wall() {
   }, [spot, open, prefs.spotlight])
 
   useEffect(() => {
-    if (!prefs.scroll || layoutNow !== 'mosaic') return
+    if (!(prefs.scroll || layoutNow === 'pinboard') || !columns) return
     let raf = 0
     let last = performance.now()
     let pause = 0
@@ -397,7 +634,7 @@ function Wall() {
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [prefs.scroll, prefs.speed, open, layoutNow])
+  }, [prefs.scroll, prefs.speed, open, layoutNow, columns])
 
   useEffect(() => {
     let timer = setTimeout(() => setIdle(true), 3000)
@@ -433,11 +670,19 @@ function Wall() {
 
   return (
     <div class={`dsp2 lay-${layoutNow} ${palette.dark ? 'is-dark' : 'is-light'} ${landscape ? 'wide' : 'tall'} ${idle ? 'idle' : ''}`} style={vars}>
-      {data.photos.length === 0 ? (
+      {layoutNow === 'filmstrip' ? (
+        <Filmstrip ev={ev} data={data} photos={data.photos} fresh={fresh} showLikes={showLikes} onOpen={setOpen} wallRef={wallRef} t={t} />
+      ) : data.photos.length === 0 ? (
         <div class="empty-stage">
           <span class="empty-roll"><Icon name="film" size={40} stroke={1.2} /></span>
           <p>{t.waitingForPhotos}</p>
         </div>
+      ) : layoutNow === 'pinboard' ? (
+        <Pinboard photos={data.photos} fresh={fresh} showLikes={showLikes} onOpen={setOpen} wallRef={wallRef} t={t} />
+      ) : layoutNow === 'clothesline' ? (
+        <Clothesline photos={data.photos} showLikes={showLikes} onOpen={setOpen} landscape={landscape} />
+      ) : layoutNow === 'streaming' ? (
+        <Streaming ev={ev} data={data} photos={data.photos} showLikes={showLikes} onOpen={setOpen} t={t} />
       ) : layoutNow === 'table' ? (
         <Table photos={data.photos} showLikes={showLikes} onOpen={setOpen} landscape={landscape} />
       ) : layoutNow === 'cinema' ? (
@@ -446,7 +691,7 @@ function Wall() {
         <Mosaic photos={data.photos} fresh={fresh} showLikes={showLikes} onOpen={setOpen} wallRef={wallRef} t={t} />
       )}
 
-      <Ticket ev={ev} data={data} t={t} />
+      {!['filmstrip', 'streaming'].includes(layoutNow) && <Ticket ev={ev} data={data} t={t} bar={layoutNow === 'clothesline'} />}
 
       <div class="tools">
         <button class="tool" onClick={toggleFull} aria-label={t.fullscreen}><Icon name={full ? 'shrink' : 'expand'} size={18} /></button>

@@ -172,6 +172,53 @@ export function Hero({ event, t, coverUrl }) {
         </header>
       )
 
+    case 'noir_gold':
+      return (
+        <header class="gh-hero gh-deco">
+          <p class="gh-deco-kicker"><span />{t.poweredBy}<span /></p>
+          <div class="gh-deco-frame">
+            <span class="gh-deco-corner tl" /><span class="gh-deco-corner tr" /><span class="gh-deco-corner bl" /><span class="gh-deco-corner br" />
+            <div class="gh-deco-img"><Cover src={cover} /></div>
+          </div>
+          <h1 class="gh-title">{name}</h1>
+          <p class="gh-deco-fan" aria-hidden="true" />
+          <p class="gh-count">{count}</p>
+        </header>
+      )
+
+    case 'velvet':
+      return (
+        <header class="gh-hero gh-velvet">
+          <div class="gh-velvet-img"><Cover src={cover} /></div>
+          <p class="gh-velvet-kicker">— {t.poweredBy} —</p>
+          <h1 class="gh-title">{name}</h1>
+          <p class="gh-count">{count}</p>
+        </header>
+      )
+
+    case 'marquee':
+      return (
+        <header class="gh-hero gh-marquee">
+          <div class="gh-marquee-sign">
+            <span class="gh-bulbs" aria-hidden="true" />
+            <p class="gh-marquee-now">NOW SHOWING</p>
+            <div class="gh-marquee-img"><Cover src={cover} /></div>
+            <h1 class="gh-title">{name}</h1>
+          </div>
+          <p class="gh-count">{count}</p>
+        </header>
+      )
+
+    case 'moonlight':
+      return (
+        <header class="gh-hero gh-moon">
+          <span class="gh-stars" aria-hidden="true" />
+          <div class="gh-moon-disc"><Cover src={cover} /></div>
+          <h1 class="gh-title">{name}</h1>
+          <p class="gh-count">{count}</p>
+        </header>
+      )
+
     default:
       return (
         <header class="gh-hero gh-dark">

@@ -433,3 +433,113 @@
 .gh-sprig.r { right: calc(17% - 30px); transform: scaleX(-1) rotate(-24deg); }
 .gh-garden .gh-title { margin: 26px 0 0; font: italic 500 clamp(34px, 11cqi, 46px) / 1.04 'Cormorant Garamond', Georgia, serif; text-wrap: balance; }
 .gh-garden .gh-count { margin-top: 10px; }
+
+/* ---------- Art Deco Gold ---------- */
+.theme-noir_gold {
+  --g-bg: #0d0c0a;
+  --g-ink: #f3ead7;
+  --g-muted: rgba(243, 234, 215, 0.6);
+  --g-faint: rgba(243, 234, 215, 0.34);
+  --g-line: rgba(212, 175, 106, 0.28);
+  --g-field: rgba(255, 255, 255, 0.04);
+  --g-accent: #d4af6a;
+  --g-on-accent: #0d0c0a;
+  --g-btn: var(--g-accent);
+  --g-btn-ink: var(--g-on-accent);
+  --g-card: #16140f;
+  background-image: repeating-linear-gradient(90deg, rgba(212, 175, 106, 0.035) 0 1px, transparent 1px 22px);
+}
+.gh-deco { padding: 26px 26px 4px; text-align: center; }
+.gh-deco-kicker { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 0 18px; font: 600 10px var(--g-mono); letter-spacing: 0.32em; text-transform: uppercase; color: var(--g-accent); }
+.gh-deco-kicker span { width: 34px; height: 1px; background: currentColor; }
+.gh-deco-frame { position: relative; width: min(78%, 320px); margin: 0 auto; padding: 10px; border: 1px solid var(--g-accent); box-shadow: inset 0 0 0 4px var(--g-bg), inset 0 0 0 5px var(--g-accent); }
+.gh-deco-img { aspect-ratio: 3 / 4; overflow: hidden; background: #1b1812; }
+.gh-deco-img img, .gh-deco-img .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-deco-img .gh-cover-empty { position: static; display: grid; }
+.gh-deco-corner { position: absolute; width: 26px; height: 26px; border: 2px solid var(--g-accent); background: var(--g-bg); transform: rotate(45deg); }
+.gh-deco-corner.tl { top: -13px; left: -13px; } .gh-deco-corner.tr { top: -13px; right: -13px; } .gh-deco-corner.bl { bottom: -13px; left: -13px; } .gh-deco-corner.br { bottom: -13px; right: -13px; }
+.gh-deco .gh-title { margin: 30px 0 0; font: 500 clamp(28px, 9cqi, 38px) / 1.1 'Cormorant Garamond', Georgia, serif; letter-spacing: 0.14em; text-transform: uppercase; text-wrap: balance; }
+.gh-deco-fan { width: 70px; height: 35px; margin: 12px auto 0; border-radius: 70px 70px 0 0; background: repeating-conic-gradient(from -90deg at 50% 100%, var(--g-accent) 0 2deg, transparent 2deg 18deg); -webkit-mask: radial-gradient(circle at 50% 100%, transparent 8px, #000 9px); mask: radial-gradient(circle at 50% 100%, transparent 8px, #000 9px); opacity: 0.85; }
+.gh-deco .gh-count { margin-top: 10px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+
+/* ---------- Velvet Night ---------- */
+.theme-velvet {
+  --g-bg: #2a0b14;
+  --g-ink: #f7e9dc;
+  --g-muted: rgba(247, 233, 220, 0.64);
+  --g-faint: rgba(247, 233, 220, 0.36);
+  --g-line: rgba(247, 233, 220, 0.14);
+  --g-field: rgba(255, 255, 255, 0.06);
+  --g-accent: #e8c9a0;
+  --g-on-accent: #2a0b14;
+  --g-btn: var(--g-accent);
+  --g-btn-ink: var(--g-on-accent);
+  --g-card: #35111c;
+  background-image: radial-gradient(90% 55% at 50% 0%, rgba(255, 120, 140, 0.16), transparent 70%), repeating-linear-gradient(100deg, rgba(0, 0, 0, 0.09) 0 3px, transparent 3px 9px);
+}
+.gh-velvet { padding: 34px 28px 4px; text-align: center; }
+.gh-velvet-img { width: min(70%, 290px); margin: 0 auto; aspect-ratio: 3 / 4; border-radius: 160px 160px 18px 18px; overflow: hidden; box-shadow: 0 0 0 1px rgba(232, 201, 160, 0.4), 0 30px 60px -20px rgba(0, 0, 0, 0.7), 0 0 80px -20px rgba(232, 201, 160, 0.35); }
+.gh-velvet-img img, .gh-velvet-img .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-velvet-img .gh-cover-empty { position: static; display: grid; background: #3a1420; }
+.gh-velvet-kicker { margin: 26px 0 0; font: italic 500 15px 'Cormorant Garamond', Georgia, serif; letter-spacing: 0.08em; color: var(--g-accent); }
+.gh-velvet .gh-title { margin: 6px 0 0; font: italic 500 clamp(32px, 10.5cqi, 44px) / 1.08 'Playfair Display', Georgia, serif; text-wrap: balance; background: linear-gradient(180deg, #fff6ea, var(--g-accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---------- Cinema Marquee ---------- */
+.theme-marquee {
+  --g-bg: #100c0a;
+  --g-ink: #fbf1de;
+  --g-muted: rgba(251, 241, 222, 0.62);
+  --g-faint: rgba(251, 241, 222, 0.34);
+  --g-line: rgba(251, 241, 222, 0.13);
+  --g-field: rgba(255, 255, 255, 0.05);
+  --g-accent: #ffcf6b;
+  --g-on-accent: #1a1006;
+  --g-btn: #c8352b;
+  --g-btn-ink: #fff4e0;
+  --g-card: #1a1411;
+}
+.gh-marquee { padding: 28px 20px 4px; text-align: center; }
+.gh-marquee-sign { position: relative; padding: 26px 22px 22px; border-radius: 14px; background: #1c1411; box-shadow: inset 0 0 0 3px #3a2a1e, 0 30px 50px -24px rgba(0, 0, 0, 0.8); }
+.gh-bulbs {
+  position: absolute;
+  inset: 7px;
+  border-radius: 10px;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--g-accent) 2.4px, transparent 3.2px), radial-gradient(circle, var(--g-accent) 2.4px, transparent 3.2px);
+  background-size: 18px 8px, 18px 8px;
+  background-position: 4px 0, 13px 100%;
+  background-repeat: repeat-x;
+  filter: drop-shadow(0 0 4px var(--g-accent));
+  animation: bulbs 1.4s steps(2) infinite;
+}
+@keyframes bulbs { 50% { opacity: 0.55; } }
+.gh-marquee-now { margin: 0 0 12px; font: 400 18px 'Bebas Neue', Impact, sans-serif; letter-spacing: 0.4em; color: var(--g-accent); text-shadow: 0 0 10px rgba(255, 207, 107, 0.6); }
+.gh-marquee-img { aspect-ratio: 4 / 3.6; overflow: hidden; border-radius: 4px; background: #241a15; }
+.gh-marquee-img img, .gh-marquee-img .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-marquee-img .gh-cover-empty { position: static; display: grid; }
+.gh-marquee .gh-title { margin: 16px 0 0; font: 400 clamp(38px, 12cqi, 54px) / 0.95 'Bebas Neue', Impact, sans-serif; letter-spacing: 0.04em; color: #fff7e6; text-shadow: 0 0 14px rgba(255, 207, 107, 0.35); text-wrap: balance; }
+.gh-marquee .gh-count { margin-top: 14px; }
+
+/* ---------- Moonlight ---------- */
+.theme-moonlight {
+  --g-bg: #0a1226;
+  --g-ink: #eef1ff;
+  --g-muted: rgba(238, 241, 255, 0.62);
+  --g-faint: rgba(238, 241, 255, 0.34);
+  --g-line: rgba(238, 241, 255, 0.13);
+  --g-field: rgba(255, 255, 255, 0.05);
+  --g-accent: #cfd8ff;
+  --g-on-accent: #0a1226;
+  --g-btn: var(--g-accent);
+  --g-btn-ink: var(--g-on-accent);
+  --g-card: #111a33;
+  background-image: radial-gradient(70% 45% at 50% 22%, rgba(207, 216, 255, 0.14), transparent 70%), linear-gradient(#0a1226, #121c3a);
+}
+.gh-moon { position: relative; padding: 40px 24px 4px; text-align: center; }
+.gh-stars { position: absolute; inset: 0 0 30% 0; pointer-events: none; background-image: radial-gradient(1.2px 1.2px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 28% 62%, #fff, transparent), radial-gradient(1.4px 1.4px at 78% 12%, #fff, transparent), radial-gradient(1px 1px at 88% 48%, #fff, transparent), radial-gradient(1.2px 1.2px at 64% 74%, #fff, transparent), radial-gradient(1px 1px at 8% 82%, #fff, transparent), radial-gradient(1px 1px at 46% 8%, #fff, transparent); opacity: 0.8; animation: twinkle 4s ease-in-out infinite; }
+@keyframes twinkle { 50% { opacity: 0.45; } }
+.gh-moon-disc { position: relative; width: min(66%, 270px); margin: 0 auto; aspect-ratio: 1; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(207, 216, 255, 0.5), 0 0 60px 6px rgba(207, 216, 255, 0.28), 0 0 140px 20px rgba(120, 140, 255, 0.15); }
+.gh-moon-disc img, .gh-moon-disc .gh-cover-empty { width: 100%; height: 100%; object-fit: cover; }
+.gh-moon-disc .gh-cover-empty { position: static; display: grid; background: radial-gradient(circle at 40% 35%, #e8ecff, #9aa6d6); color: #5c6a9e; }
+.gh-moon .gh-title { position: relative; margin: 34px 0 0; font: italic 500 clamp(32px, 10.5cqi, 44px) / 1.08 'Cormorant Garamond', Georgia, serif; text-wrap: balance; }
+.gh-moon .gh-count { margin-top: 8px; }

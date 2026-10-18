@@ -87,6 +87,10 @@ const id = {
   layout: 'Tata letak',
   palette: 'Palet warna',
   eventDefault: 'Ikuti pengaturan acara',
+  liveNow: 'Siaran langsung dari tamu',
+  rowNewest: 'Baru masuk',
+  rowLoved: 'Paling disukai',
+  rowFrom: (name) => `Jepretan ${name}`,
 }
 
 const en = {
@@ -173,6 +177,10 @@ const en = {
   layout: 'Layout',
   palette: 'Palette',
   eventDefault: 'Use the event settings',
+  liveNow: 'Live from the guests',
+  rowNewest: 'Just in',
+  rowLoved: 'Most loved',
+  rowFrom: (name) => `Shot by ${name}`,
 }
 
 export function strings(lang) {
