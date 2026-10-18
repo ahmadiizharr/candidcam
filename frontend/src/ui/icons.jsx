@@ -33,6 +33,8 @@ const paths = {
   globe: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.4 2.6 3.5 5.4 3.5 8.5s-1.1 5.9-3.5 8.5c-2.4-2.6-3.5-5.4-3.5-8.5s1.1-5.9 3.5-8.5z" /></>,
   more: <><circle cx="6" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="18" cy="12" r="1.2" /></>,
   bolt: <><path d="M13 3.5 5.5 13.5H12l-1 7 7.5-10H12z" /></>,
+  boltOff: <><path d="M13 3.5 9.6 8M7.7 10.5l-2.2 3H12l-1 7 3.4-4.5M16.3 13.5l2.2-3H13.6" /><path d="M4 4l16 16" /></>,
+  person: <><circle cx="12" cy="8.5" r="3.5" /><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" /></>,
 }
 
 export function Icon({ name, size = 20, stroke = 1.75, class: cls, fill = 'none', ...rest }) {

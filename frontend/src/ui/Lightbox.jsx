@@ -22,28 +22,29 @@ export function Lightbox({ photos, index, onIndex, onClose, footer, labels = {} 
   }, [index, photos.length])
   if (!photo) return null
   return (
-    <div
-      class="lb"
-      role="dialog"
-      aria-modal="true"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      onTouchStart={(e) => (touch.current = e.touches[0].clientX)}
-      onTouchEnd={(e) => {
-        const dx = e.changedTouches[0].clientX - (touch.current ?? 0)
-        if (Math.abs(dx) > 50) {
-          if (dx > 0 && index > 0) onIndex(index - 1)
-          if (dx < 0 && index < photos.length - 1) onIndex(index + 1)
-        }
-      }}
-    >
-      <button class="lb-btn lb-close" onClick={onClose} aria-label={labels.close || 'Tutup'}><Icon name="close" size={20} /></button>
-      {index > 0 && <button class="lb-btn lb-prev" onClick={() => onIndex(index - 1)} aria-label={labels.prev || 'Sebelumnya'}><Icon name="back" size={22} /></button>}
-      {index < photos.length - 1 && <button class="lb-btn lb-next" onClick={() => onIndex(index + 1)} aria-label={labels.next || 'Berikutnya'}><Icon name="next" size={22} /></button>}
-      <figure class="lb-fig" onClick={(e) => e.target === e.currentTarget && onClose()}>
-        <img key={photo.id} src={photo.url} alt="" style={{ aspectRatio: `${photo.width} / ${photo.height}` }} />
-      </figure>
-      {footer && <div class="lb-foot">{footer(photo)}</div>}
-      <span class="lb-pos mono">{index + 1} / {photos.length}</span>
+    <div class="lb" role="dialog" aria-modal="true">
+      <header class="lb-top">
+        <button class="lb-btn" onClick={onClose} aria-label={labels.close || 'Tutup'}><Icon name="close" size={20} /></button>
+        <span class="lb-pos">{index + 1} / {photos.length}</span>
+        <span class="lb-btn lb-ghost" />
+      </header>
+      <div
+        class="lb-stage"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+        onTouchStart={(e) => (touch.current = e.touches[0].clientX)}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - (touch.current ?? 0)
+          if (Math.abs(dx) > 50) {
+            if (dx > 0 && index > 0) onIndex(index - 1)
+            if (dx < 0 && index < photos.length - 1) onIndex(index + 1)
+          }
+        }}
+      >
+        <img key={photo.id} src={photo.url} alt="" />
+        {index > 0 && <button class="lb-btn lb-prev" onClick={() => onIndex(index - 1)} aria-label={labels.prev || 'Sebelumnya'}><Icon name="back" size={22} /></button>}
+        {index < photos.length - 1 && <button class="lb-btn lb-next" onClick={() => onIndex(index + 1)} aria-label={labels.next || 'Berikutnya'}><Icon name="next" size={22} /></button>}
+      </div>
+      {footer && <footer class="lb-foot">{footer(photo)}</footer>}
     </div>
   )
 }
