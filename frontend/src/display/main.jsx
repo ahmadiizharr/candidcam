@@ -470,16 +470,8 @@ function Streaming({ ev, data, photos, showLikes, onOpen, t }) {
     return () => clearInterval(id)
   }, [heroes.length])
   const hero = heroes[Math.min(i, heroes.length - 1)]
-  const byGuest = useMemo(() => {
-    const m = new Map()
-    for (const p of photos) m.set(p.guest_name, [...(m.get(p.guest_name) || []), p])
-    return [...m.entries()].filter(([, ps]) => ps.length >= 2).sort((a, b) => b[1].length - a[1].length).slice(0, 2)
-  }, [photos])
-  const rows = [
-    [t.rowNewest, photos.slice(0, 18)],
-    ...(ev.enable_likes ? [[t.rowLoved, [...photos].sort((a, b) => b.likes_count - a.likes_count).slice(0, 18)]] : []),
-    ...byGuest.map(([name, ps]) => [t.rowFrom(name), ps]),
-  ].filter(([, ps]) => ps.length)
+  // One rolling row of the newest shots under the banner.
+  const rows = [[t.rowNewest, photos.slice(0, 24)]].filter(([, ps]) => ps.length)
   return (
     <div class="stream">
       {hero && (
